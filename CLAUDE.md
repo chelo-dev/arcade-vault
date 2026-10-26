@@ -26,6 +26,9 @@ Next 16.4.3 + React 19.3. `AGENTS.md` exige leer la guía relevante en `node_mod
 - `experimental.agentFeedback: true`
 - Tailwind v4 se carga vía regla de Turbopack (`@tailwindcss/turbopack` para `*.css`), no vía PostCSS.
 
+## Skills
+Utiliza la skill /frontend-desing para la interfaz de usuario.
+
 ## Arquitectura
 
 - Solo App Router (`app/`). Alias de imports `@/*` apunta a la raíz del repo.
