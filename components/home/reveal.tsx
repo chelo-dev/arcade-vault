@@ -2,7 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-export function Reveal({ className, children }: { className?: string; children: React.ReactNode }) {
+type RevealProps = {
+  className?: string;
+  children: React.ReactNode;
+  "aria-hidden"?: React.AriaAttributes["aria-hidden"];
+};
+
+export function Reveal({ className, children, "aria-hidden": ariaHidden }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -24,7 +30,7 @@ export function Reveal({ className, children }: { className?: string; children: 
   }, []);
 
   return (
-    <section ref={ref} className={"reveal" + (className ? " " + className : "")}>
+    <section ref={ref} aria-hidden={ariaHidden} className={"reveal" + (className ? " " + className : "")}>
       {children}
     </section>
   );

@@ -14,6 +14,7 @@ export function Nav() {
     inicio: pathname.startsWith("/games"),
     biblioteca: pathname.startsWith("/biblioteca") || pathname.startsWith("/juegos"),
     salon: pathname.startsWith("/salon"),
+    about: pathname.startsWith("/about"),
     auth: pathname.startsWith("/auth"),
   };
   const cls = (on: boolean) => (on ? "active" : undefined);
@@ -32,6 +33,7 @@ export function Nav() {
           <Link href="/games" className={cls(active.inicio)}>Inicio</Link>
           <Link href="/biblioteca" className={cls(active.biblioteca)}>Biblioteca</Link>
           <Link href="/salon" className={cls(active.salon)}>Salón de la Fama</Link>
+          <Link href="/about" className={cls(active.about)}>Acerca de</Link>
         </div>
         <div className="spacer"></div>
         <div className="coin-counter">
@@ -62,6 +64,7 @@ export function Nav() {
         <Link href="/games" className={cls(active.inicio)} onClick={close}>Inicio</Link>
         <Link href="/biblioteca" className={cls(active.biblioteca)} onClick={close}>Biblioteca</Link>
         <Link href="/salon" className={cls(active.salon)} onClick={close}>Salón de la Fama</Link>
+        <Link href="/about" className={cls(active.about)} onClick={close}>Acerca de</Link>
         <Link href="/auth" className={cls(active.auth)} onClick={close}>
           {user ? "Cuenta" : "Iniciar Sesión"}
         </Link>
