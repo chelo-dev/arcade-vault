@@ -15,12 +15,12 @@ export function AuthForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     login(user);
-    router.push("/");
+    router.push("/games");
   };
 
   const playAsGuest = () => {
     signOut();
-    router.push("/");
+    router.push("/games");
   };
 
   return (
