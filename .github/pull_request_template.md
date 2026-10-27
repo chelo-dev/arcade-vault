@@ -5,11 +5,7 @@
 
 ## Por qué
 <!-- Problema o necesidad. Enlace a tarea/issue. -->
-Closes #<!-- Borra las secciones que no apliquen: una sección vacía es ruido para el revisor. -->
-
-  
-
-## Qué c
+Closes #
 
 ## Tipo de cambio
 - [ ] feat: nueva funcionalidad
