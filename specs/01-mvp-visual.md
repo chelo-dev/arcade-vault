@@ -1,6 +1,6 @@
 # SPEC 01 — MVP visual de Arcade Vault
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** ninguna
 > **Fecha:** 2026-10-26
 > **Objetivo:** Portar a Next.js las 5 pantallas de `references/resources/templates/` (biblioteca, detalle, reproductor, salón de la fama, auth) como MVP solo visual, sin lógica de juego real.
@@ -77,19 +77,19 @@ Convenciones: los 8 juegos y 18 jugadores de `data.jsx` se copian tal cual; núm
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] Existen las rutas `/`, `/juegos/[id]`, `/juegos/[id]/jugar`, `/salon` y `/auth`; ninguna muestra contenido de Create Next App.
-- [ ] La biblioteca muestra los 8 juegos; escribir "caí" deja solo CAÍDA; elegir VERSUS deja solo DUELO PIXEL.
-- [ ] Una búsqueda sin coincidencias muestra "NO HAY RESULTADOS".
-- [ ] `/juegos/no-existe` devuelve 404.
-- [ ] Desde el detalle, "jugar" lleva a `/juegos/[id]/jugar` y SALIR vuelve al detalle.
-- [ ] En el reproductor, PAUSA detiene el score y REANUDAR lo reanuda; FIN abre el modal "FIN DEL JUEGO".
-- [ ] Guardar puntuación crea una entrada en `localStorage["av_scores"]` y muestra "PUNTUACIÓN GUARDADA".
-- [ ] Iniciar sesión con usuario "px_kai" muestra "PX_KAI" en el nav; recargar la página lo conserva; cerrar sesión lo elimina.
-- [ ] "Jugar como invitado" vuelve a la biblioteca sin usuario.
-- [ ] El nav resalta Biblioteca en `/`, detalle y reproductor, y Salón de la Fama en `/salon`.
-- [ ] A 375 px de ancho no hay scroll horizontal y aparece el botón hamburguesa con panel lateral.
-- [ ] No hay errores de hidratación en la consola del navegador en ninguna ruta.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] Existen las rutas `/`, `/juegos/[id]`, `/juegos/[id]/jugar`, `/salon` y `/auth`; ninguna muestra contenido de Create Next App.
+- [x] La biblioteca muestra los 8 juegos; escribir "caí" deja solo CAÍDA; elegir VERSUS deja solo DUELO PIXEL.
+- [x] Una búsqueda sin coincidencias muestra "NO HAY RESULTADOS".
+- [x] `/juegos/no-existe` devuelve 404.
+- [x] Desde el detalle, "jugar" lleva a `/juegos/[id]/jugar` y SALIR vuelve al detalle.
+- [x] En el reproductor, PAUSA detiene el score y REANUDAR lo reanuda; FIN abre el modal "FIN DEL JUEGO".
+- [x] Guardar puntuación crea una entrada en `localStorage["av_scores"]` y muestra "PUNTUACIÓN GUARDADA".
+- [x] Iniciar sesión con usuario "px_kai" muestra "PX_KAI" en el nav; recargar la página lo conserva; cerrar sesión lo elimina.
+- [x] "Jugar como invitado" vuelve a la biblioteca sin usuario.
+- [x] El nav resalta Biblioteca en `/`, detalle y reproductor, y Salón de la Fama en `/salon`.
+- [x] A 375 px de ancho no hay scroll horizontal y aparece el botón hamburguesa con panel lateral.
+- [x] No hay errores de hidratación en la consola del navegador en ninguna ruta.
 
 ## Decisiones
 
