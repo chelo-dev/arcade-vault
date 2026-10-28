@@ -1,6 +1,6 @@
 # SPEC 04 — Conexión con Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-10-27
 > **Objetivo:** Conectar la app Next.js al proyecto Supabase con clientes de navegador y servidor listos para usar, variables de entorno documentadas y una verificación de conexión, sin cambiar ninguna funcionalidad.
@@ -68,16 +68,16 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] `package.json` incluye `@supabase/supabase-js` y `@supabase/ssr`.
-- [ ] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y ya no contiene `SUPABASE_PASSWORD`.
-- [ ] Existen `lib/supabase/client.ts` y `lib/supabase/server.ts`, cada uno exportando `createClient`.
-- [ ] `supabase/config.toml` está versionado.
-- [ ] Con `.env.local` correcto, la consulta de salud recibe respuesta 200 del proyecto; con una clave inválida recibe error.
-- [ ] Sin las variables, crear un cliente lanza un error que nombra la variable que falta.
-- [ ] El código de la consulta de salud no queda en el repositorio.
-- [ ] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código ni en `.env.example`.
-- [ ] Ninguna pantalla cambia de aspecto ni de comportamiento; login mock y puntuaciones siguen como en SPEC 01.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] `package.json` incluye `@supabase/supabase-js` y `@supabase/ssr`.
+- [x] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` y ya no contiene `SUPABASE_PASSWORD`.
+- [x] Existen `lib/supabase/client.ts` y `lib/supabase/server.ts`, cada uno exportando `createClient`.
+- [x] `supabase/config.toml` está versionado.
+- [x] Con `.env.local` correcto, la consulta de salud recibe respuesta 200 del proyecto; con una clave inválida recibe error.
+- [x] Sin las variables, crear un cliente lanza un error que nombra la variable que falta.
+- [x] El código de la consulta de salud no queda en el repositorio.
+- [x] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código ni en `.env.example`.
+- [x] Ninguna pantalla cambia de aspecto ni de comportamiento; login mock y puntuaciones siguen como en SPEC 01.
 
 ## Decisiones
 
