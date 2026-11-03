@@ -1,6 +1,6 @@
 # SPEC 08 — Juego BLOQUE BUSTER (Arkanoid) con leaderboard
 
-> **Estado:** Pendiente
+> **Estado:** Implementado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a Next.js el juego de `references/resources/started-games/04-arkanoid/` sin cambiar su jugabilidad, jugable en `/juegos/bloque-buster/jugar` con el reproductor genérico `CanvasGamePlayer`, y guardar sus puntuaciones en Supabase para que aparezcan en `/salon`, el detalle y la biblioteca.
@@ -60,20 +60,20 @@ Sin tablas nuevas: se reutilizan `games`, `scores` y `plays` (SPEC 06). Contrato
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] `/juegos/bloque-buster/jugar` muestra el juego en el marco CRT con paleta, bola, bloques del spritesheet, HUD `Puntaje`/`Vidas` y se comporta como el original: 3 niveles con los layouts de `LEVELS`, velocidades base 4/5/6, bloques grises de 2 golpes, +10 por bloque destruido, ángulo de rebote en la paleta hasta 60° y explosiones de 4 _frames_.
-- [ ] La pantalla de inicio pide SPACE (al empezar y tras perder una vida) y ya no muestra `High Score`; A/D y flechas mueven la paleta sin hacer scroll; Space no hace scroll.
-- [ ] La velocidad de bola y paleta es la misma a 60 y a 144 Hz (paso fijo) y tras volver a la pestaña no hay saltos.
-- [ ] Al perder la tercera vida y al destruir el último bloque del nivel 3 se llama a `onGameOver` exactamente una vez con la puntuación mostrada y se abre el modal; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN. El canvas ya no dibuja «GAME OVER» ni «¡VICTORIA!».
-- [ ] GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'bloque-buster'`, la puntuación y el nombre del campo; el modal muestra `▸ PUNTUACIÓN GUARDADA_`; si falla, muestra error y permite reintentar.
-- [ ] Cada partida terminada crea exactamente una fila en `plays`; salir a mitad no crea filas.
-- [ ] JUGAR DE NUEVO reinicia (nivel 1, 3 vidas, puntuación 0, bloques y explosiones limpios), cierra el modal y deja la pantalla de inicio; escribir en el campo de nombre no mueve la paleta ni deja una tecla pegada.
-- [ ] La barra superior muestra Jugador, Puntuación, Vidas (3 → 0) y Nivel (1–3) en vivo; PAUSA congela bola, explosiones y la cuenta atrás de «Nivel completado», y REANUDAR continúa sin saltos; FIN termina la partida una sola vez; `Escape` y `P` ya no hacen nada.
-- [ ] Los assets se sirven desde `/games/arkanoid/…`; si el audio está bloqueado el juego no lanza errores; no hay `localStorage` propio.
-- [ ] Al desmontar no quedan listeners ni `requestAnimationFrame` (entrar y salir 3 veces no acelera la bola ni duplica sonidos); desmontar antes de que cargue el PNG no arranca el bucle.
-- [ ] Existe `supabase/migrations/*_bloque_buster_playable.sql` y coincide con el esquema aplicado; con la clave publicable, insert en `scores`/`plays` de `bloque-buster` funciona y update/delete no afectan filas.
-- [ ] `/salon` muestra la pestaña BLOQUE BUSTER; `/juegos/bloque-buster` y `/biblioteca` muestran partidas, guardadas y mejor puntuación reales.
-- [ ] Asteroids, CAÍDA y el resto de juegos conservan su comportamiento; `lib/games/arkanoid.ts` no importa React ni `@/lib/session`.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] `/juegos/bloque-buster/jugar` muestra el juego en el marco CRT con paleta, bola, bloques del spritesheet, HUD `Puntaje`/`Vidas` y se comporta como el original: 3 niveles con los layouts de `LEVELS`, velocidades base 4/5/6, bloques grises de 2 golpes, +10 por bloque destruido, ángulo de rebote en la paleta hasta 60° y explosiones de 4 _frames_.
+- [x] La pantalla de inicio pide SPACE (al empezar y tras perder una vida) y ya no muestra `High Score`; A/D y flechas mueven la paleta sin hacer scroll; Space no hace scroll.
+- [x] La velocidad de bola y paleta es la misma a 60 y a 144 Hz (paso fijo) y tras volver a la pestaña no hay saltos.
+- [x] Al perder la tercera vida y al destruir el último bloque del nivel 3 se llama a `onGameOver` exactamente una vez con la puntuación mostrada y se abre el modal; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN. El canvas ya no dibuja «GAME OVER» ni «¡VICTORIA!».
+- [x] GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'bloque-buster'`, la puntuación y el nombre del campo; el modal muestra `▸ PUNTUACIÓN GUARDADA_`; si falla, muestra error y permite reintentar.
+- [x] Cada partida terminada crea exactamente una fila en `plays`; salir a mitad no crea filas.
+- [x] JUGAR DE NUEVO reinicia (nivel 1, 3 vidas, puntuación 0, bloques y explosiones limpios), cierra el modal y deja la pantalla de inicio; escribir en el campo de nombre no mueve la paleta ni deja una tecla pegada.
+- [x] La barra superior muestra Jugador, Puntuación, Vidas (3 → 0) y Nivel (1–3) en vivo; PAUSA congela bola, explosiones y la cuenta atrás de «Nivel completado», y REANUDAR continúa sin saltos; FIN termina la partida una sola vez; `Escape` y `P` ya no hacen nada.
+- [x] Los assets se sirven desde `/games/arkanoid/…`; si el audio está bloqueado el juego no lanza errores; no hay `localStorage` propio.
+- [x] Al desmontar no quedan listeners ni `requestAnimationFrame` (entrar y salir 3 veces no acelera la bola ni duplica sonidos); desmontar antes de que cargue el PNG no arranca el bucle.
+- [x] Existe `supabase/migrations/*_bloque_buster_playable.sql` y coincide con el esquema aplicado; con la clave publicable, insert en `scores`/`plays` de `bloque-buster` funciona y update/delete no afectan filas.
+- [x] `/salon` muestra la pestaña BLOQUE BUSTER; `/juegos/bloque-buster` y `/biblioteca` muestran partidas, guardadas y mejor puntuación reales.
+- [x] Asteroids, CAÍDA y el resto de juegos conservan su comportamiento; `lib/games/arkanoid.ts` no importa React ni `@/lib/session`.
 
 ## Decisiones
 
