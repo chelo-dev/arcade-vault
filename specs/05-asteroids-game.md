@@ -1,6 +1,6 @@
 # SPEC 05 — Juego Asteroids (sustituye a ROCAS)
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a Next.js el juego de `references/resources/started-games/02-asteroids/` sin cambiar su jugabilidad ni su HUD, jugable en `/juegos/rocas/jugar`, y, cuando termina la partida, abrir el modal de fin de juego de la app (nombre, guardar puntuación, jugar de nuevo, volver al vault) con comunicación en ambos sentidos entre el juego y la app. *(Ampliado el 2026-11-03: ver «Historial de cambios».)*
@@ -111,24 +111,24 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] `/juegos/rocas/jugar` muestra el juego dentro del marco CRT; la nave, asteroides, balas, power-up `3x`, partículas, niveles y HUD del canvas se comportan igual que en `index.html` original.
-- [ ] Las constantes de jugabilidad (`RADII`, `SPEEDS`, `POINTS`, `POWERUP_*`, `TRIPLE_SPREAD`, rotación, empuje, fricción, 3 vidas, 4 asteroides iniciales, `3 + level` por nivel) coinciden con las de `game.js`.
-- [ ] Al perder la última vida se llama a `onGameOver` exactamente una vez con la puntuación mostrada en pantalla y se abre el modal FIN DEL JUEGO con esa puntuación; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN.
-- [ ] GUARDAR PUNTUACIÓN crea una entrada en `localStorage.av_scores` con `{ game: "rocas", score, name, at }` y el modal muestra `▸ PUNTUACIÓN GUARDADA_`.
-- [ ] El modal precarga el nombre de la sesión (o `INVITADO`); es editable (mayúsculas, máx. 10) y ese es el nombre que se guarda.
-- [ ] JUGAR DE NUEVO y `Espacio` reinician la partida y cierran el modal; perder y guardar otra partida añade una segunda entrada sin duplicar la primera.
-- [ ] VOLVER AL VAULT lleva a `/biblioteca`. Escribir en el campo de nombre (incluido el espacio) no mueve la nave, no reinicia el juego ni hace scroll.
-- [ ] Salir a mitad de partida (SALIR o navegación) no guarda nada.
-- [ ] Al desmontar el componente no quedan listeners de teclado ni `requestAnimationFrame` activos (entrar y salir 3 veces no acelera ni duplica el juego).
-- [ ] Flechas y `Espacio` no hacen scroll de la página mientras se juega.
-- [ ] El canvas se ve completo y sin deformar a 375 px (sin scroll horizontal).
-- [ ] La barra superior de `/juegos/rocas/jugar` muestra Jugador (nombre de sesión o `INVITADO`), Puntuación, Vidas y Nivel con el mismo diseño que la de `GamePlayer`, y se actualizan en vivo con la partida (puntuación al destruir, vidas al morir, nivel al limpiar asteroides).
-- [ ] La ficha del catálogo, la home y el pie del reproductor muestran `ASTEROIDS`; la ruta sigue siendo `/juegos/rocas`.
-- [ ] PAUSA congela la partida (nave, asteroides, balas y temporizadores) y muestra `EN PAUSA`; el botón pasa a REANUDAR y la partida continúa donde estaba, sin disparo ni salto de tiempo.
-- [ ] FIN termina la partida en curso (también en pausa): llama a `onGameOver` una sola vez y abre el modal con la puntuación actual; pulsarlo con el modal abierto no repite la llamada.
-- [ ] Los otros 7 juegos conservan el reproductor simulado sin cambios, y `GamePlayer` se ve y funciona igual tras extraer el modal.
-- [ ] El módulo `lib/games/asteroids.ts` no importa React ni `@/lib/session`.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] `/juegos/rocas/jugar` muestra el juego dentro del marco CRT; la nave, asteroides, balas, power-up `3x`, partículas, niveles y HUD del canvas se comportan igual que en `index.html` original.
+- [x] Las constantes de jugabilidad (`RADII`, `SPEEDS`, `POINTS`, `POWERUP_*`, `TRIPLE_SPREAD`, rotación, empuje, fricción, 3 vidas, 4 asteroides iniciales, `3 + level` por nivel) coinciden con las de `game.js`.
+- [x] Al perder la última vida se llama a `onGameOver` exactamente una vez con la puntuación mostrada en pantalla y se abre el modal FIN DEL JUEGO con esa puntuación; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN.
+- [x] GUARDAR PUNTUACIÓN crea una entrada en `localStorage.av_scores` con `{ game: "rocas", score, name, at }` y el modal muestra `▸ PUNTUACIÓN GUARDADA_`.
+- [x] El modal precarga el nombre de la sesión (o `INVITADO`); es editable (mayúsculas, máx. 10) y ese es el nombre que se guarda.
+- [x] JUGAR DE NUEVO y `Espacio` reinician la partida y cierran el modal; perder y guardar otra partida añade una segunda entrada sin duplicar la primera.
+- [x] VOLVER AL VAULT lleva a `/biblioteca`. Escribir en el campo de nombre (incluido el espacio) no mueve la nave, no reinicia el juego ni hace scroll.
+- [x] Salir a mitad de partida (SALIR o navegación) no guarda nada.
+- [x] Al desmontar el componente no quedan listeners de teclado ni `requestAnimationFrame` activos (entrar y salir 3 veces no acelera ni duplica el juego).
+- [x] Flechas y `Espacio` no hacen scroll de la página mientras se juega.
+- [x] El canvas se ve completo y sin deformar a 375 px (sin scroll horizontal).
+- [x] La barra superior de `/juegos/rocas/jugar` muestra Jugador (nombre de sesión o `INVITADO`), Puntuación, Vidas y Nivel con el mismo diseño que la de `GamePlayer`, y se actualizan en vivo con la partida (puntuación al destruir, vidas al morir, nivel al limpiar asteroides).
+- [x] La ficha del catálogo, la home y el pie del reproductor muestran `ASTEROIDS`; la ruta sigue siendo `/juegos/rocas`.
+- [x] PAUSA congela la partida (nave, asteroides, balas y temporizadores) y muestra `EN PAUSA`; el botón pasa a REANUDAR y la partida continúa donde estaba, sin disparo ni salto de tiempo.
+- [x] FIN termina la partida en curso (también en pausa): llama a `onGameOver` una sola vez y abre el modal con la puntuación actual; pulsarlo con el modal abierto no repite la llamada.
+- [x] Los otros 7 juegos conservan el reproductor simulado sin cambios, y `GamePlayer` se ve y funciona igual tras extraer el modal.
+- [x] El módulo `lib/games/asteroids.ts` no importa React ni `@/lib/session`.
 
 ## Decisiones
 
