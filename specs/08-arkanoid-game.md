@@ -1,6 +1,6 @@
 # SPEC 08 — Juego BLOQUE BUSTER (Arkanoid) con leaderboard
 
-> **Estado:** Pendiente
+> **Estado:** Aprobado
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a Next.js el juego de `references/resources/started-games/04-arkanoid/` sin cambiar su jugabilidad, jugable en `/juegos/bloque-buster/jugar` con el reproductor genérico `CanvasGamePlayer`, y guardar sus puntuaciones en Supabase para que aparezcan en `/salon`, el detalle y la biblioteca.
