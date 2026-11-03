@@ -6,7 +6,7 @@ import { GameOverModal } from "@/components/game-over-modal";
 import { PlayerStats } from "@/components/player-stats";
 import { type AsteroidsControls, createAsteroids } from "@/lib/games/asteroids";
 import type { Game } from "@/lib/games";
-import { submitScore } from "@/lib/scores-client";
+import { recordPlay, submitScore } from "@/lib/scores-client";
 import { useSession } from "@/lib/session";
 
 const INITIAL_STATS = { score: 0, lives: 3, level: 1 };
@@ -31,6 +31,7 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
     if (!canvas) return;
     const controls = createAsteroids(canvas, {
       onGameOver: () => {
+        void recordPlay(game.id);
         setPaused(false);
         setSaved(false);
         setSaving(false);
@@ -45,7 +46,7 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
       controls.destroy();
       gameRef.current = null;
     };
-  }, []);
+  }, [game.id]);
 
   const togglePause = () => {
     const next = !paused;

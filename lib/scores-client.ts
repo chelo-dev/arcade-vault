@@ -49,3 +49,10 @@ export async function fetchPlayerBest(
     created_at: best.created_at,
   };
 }
+
+// Fallo silencioso: contar la partida nunca debe interrumpir el juego.
+export async function recordPlay(gameId: string): Promise<void> {
+  try {
+    await createBrowserClient().from("plays").insert({ game_id: gameId });
+  } catch {}
+}

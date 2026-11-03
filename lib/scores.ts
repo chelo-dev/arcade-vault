@@ -39,3 +39,24 @@ export async function fetchPlayableGames(): Promise<
   if (error) throw new Error(error.message);
   return data;
 }
+
+export type GameStats = { plays: number; saved: number; best: number | null };
+
+export async function fetchGameStats(gameId: string): Promise<GameStats> {
+  const supabase = await createServerClient();
+  const [plays, saved, best] = await Promise.all([
+    supabase.from("plays").select("id", { count: "exact", head: true }).eq("game_id", gameId),
+    supabase.from("scores").select("id", { count: "exact", head: true }).eq("game_id", gameId),
+    supabase
+      .from("scores")
+      .select("score")
+      .eq("game_id", gameId)
+      .order("score", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const failed = plays.error ?? saved.error ?? best.error;
+  if (failed) throw new Error(failed.message);
+  return { plays: plays.count ?? 0, saved: saved.count ?? 0, best: best.data?.score ?? null };
+}
