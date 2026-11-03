@@ -668,7 +668,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 12px;
   text-align: center;
 }
-.asteroids-canvas {
+.game-canvas {
   display: block;
   width: 100%;
   height: 100%;
