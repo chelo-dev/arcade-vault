@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { Courier_Prime, JetBrains_Mono, Press_Start_2P } from "next/font/google";
+import {
+  Courier_Prime,
+  JetBrains_Mono,
+  Press_Start_2P,
+} from "next/font/google";
 import { Footer } from "@/components/footer";
 import { Nav } from "@/components/nav";
 import { SessionProvider } from "@/lib/session";
@@ -35,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${pressStart.variable} ${jetbrainsMono.variable} ${courierPrime.variable}`}
     >
-      <body>
+      <body suppressHydrationWarning>
         <div className="av-bg" />
         <div className="av-noise" />
         <SessionProvider>
