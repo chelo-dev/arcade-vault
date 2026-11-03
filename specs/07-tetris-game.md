@@ -1,6 +1,6 @@
 # SPEC 07 — Juego CAÍDA (Tetris) con leaderboard
 
-> **Estado:** Aprobado
+> **Estado:** Implementada
 > **Depende de:** SPEC 01, SPEC 05, SPEC 06
 > **Fecha:** 2026-11-03
 > **Objetivo:** Portar a Next.js el juego de `references/resources/started-games/03-tetris/` sin cambiar su jugabilidad, jugable en `/juegos/caida/jugar` con el reproductor genérico `CanvasGamePlayer`, y guardar sus puntuaciones en Supabase para que aparezcan en `/salon`, el detalle y la biblioteca.
@@ -58,19 +58,19 @@ Sin tablas nuevas: se reutilizan `games`, `scores` y `plays` (SPEC 06). Contrato
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] `/juegos/caida/jugar` muestra el juego en el marco CRT con tablero 10×20, pieza siguiente, fantasma y panel SCORE/LINES/LEVEL dentro del canvas; las piezas (incluida la tuerca `N`), la rotación con _kicks_, las puntuaciones `LINE_SCORES × nivel`, +1 por caída suave, +2 por celda en caída dura, el nivel `lines/10 + 1` y `dropInterval = max(100, 1000 − (nivel−1)·90)` coinciden con `game.js`.
-- [ ] Flechas, `X` y `Espacio` funcionan con repetición de teclado y no hacen scroll de la página.
-- [ ] Al quedar el tablero lleno (o pulsar FIN) se llama a `onGameOver` exactamente una vez con la puntuación mostrada y se abre el modal FIN DEL JUEGO; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN.
-- [ ] GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'caida'`, la puntuación y el nombre del campo; el modal muestra `▸ PUNTUACIÓN GUARDADA_`; si falla, muestra error y permite reintentar.
-- [ ] Cada partida terminada crea exactamente una fila en `plays`; salir a mitad no crea filas.
-- [ ] JUGAR DE NUEVO reinicia, cierra el modal y deja el tablero vacío con nivel 1; escribir en el campo de nombre no mueve piezas.
-- [ ] La barra superior muestra Jugador, Puntuación, Vidas (1 ♥ fijo) y Nivel en vivo; PAUSA congela la partida y REANUDAR la continúa sin caída instantánea; FIN termina la partida una sola vez; la tecla `P` ya no hace nada.
-- [ ] Al desmontar no quedan listeners ni `requestAnimationFrame` (entrar y salir 3 veces no acelera ni duplica la caída).
-- [ ] El canvas se ve completo y sin deformar a 375 px (sin scroll horizontal) y a escritorio sin salirse de la pantalla en alto; Asteroids se ve igual que antes.
-- [ ] Existe `supabase/migrations/*_caida_playable.sql` y coincide con el esquema aplicado; con la clave publicable, insert en `scores`/`plays` de `caida` funciona y update/delete no afectan filas.
-- [ ] `/salon` muestra las pestañas ASTEROIDS y CAÍDA; `/juegos/caida` y `/biblioteca` muestran partidas, guardadas y mejor puntuación reales de CAÍDA.
-- [ ] Los otros 6 juegos simulados conservan `GamePlayer`; `lib/games/tetris.ts` no importa React ni `@/lib/session`.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] `/juegos/caida/jugar` muestra el juego en el marco CRT con tablero 10×20, pieza siguiente, fantasma y panel SCORE/LINES/LEVEL dentro del canvas; las piezas (incluida la tuerca `N`), la rotación con _kicks_, las puntuaciones `LINE_SCORES × nivel`, +1 por caída suave, +2 por celda en caída dura, el nivel `lines/10 + 1` y `dropInterval = max(100, 1000 − (nivel−1)·90)` coinciden con `game.js`.
+- [x] Flechas, `X` y `Espacio` funcionan con repetición de teclado y no hacen scroll de la página.
+- [x] Al quedar el tablero lleno (o pulsar FIN) se llama a `onGameOver` exactamente una vez con la puntuación mostrada y se abre el modal FIN DEL JUEGO; no se guarda nada hasta pulsar GUARDAR PUNTUACIÓN.
+- [x] GUARDAR PUNTUACIÓN crea una fila en `scores` con `game_id = 'caida'`, la puntuación y el nombre del campo; el modal muestra `▸ PUNTUACIÓN GUARDADA_`; si falla, muestra error y permite reintentar.
+- [x] Cada partida terminada crea exactamente una fila en `plays`; salir a mitad no crea filas.
+- [x] JUGAR DE NUEVO reinicia, cierra el modal y deja el tablero vacío con nivel 1; escribir en el campo de nombre no mueve piezas.
+- [x] La barra superior muestra Jugador, Puntuación, Vidas (1 ♥ fijo) y Nivel en vivo; PAUSA congela la partida y REANUDAR la continúa sin caída instantánea; FIN termina la partida una sola vez; la tecla `P` ya no hace nada.
+- [x] Al desmontar no quedan listeners ni `requestAnimationFrame` (entrar y salir 3 veces no acelera ni duplica la caída).
+- [x] El canvas se ve completo y sin deformar a 375 px (sin scroll horizontal) y a escritorio sin salirse de la pantalla en alto; Asteroids se ve igual que antes.
+- [x] Existe `supabase/migrations/*_caida_playable.sql` y coincide con el esquema aplicado; con la clave publicable, insert en `scores`/`plays` de `caida` funciona y update/delete no afectan filas.
+- [x] `/salon` muestra las pestañas ASTEROIDS y CAÍDA; `/juegos/caida` y `/biblioteca` muestran partidas, guardadas y mejor puntuación reales de CAÍDA.
+- [x] Los otros 6 juegos simulados conservan `GamePlayer`; `lib/games/tetris.ts` no importa React ni `@/lib/session`.
 
 ## Decisiones
 
