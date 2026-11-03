@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { GameOverModal } from "@/components/game-over-modal";
+import { PlayerStats } from "@/components/player-stats";
 import type { Game } from "@/lib/games";
 import { useSession } from "@/lib/session";
 
@@ -42,24 +44,7 @@ export function GamePlayer({ game }: { game: Game }) {
   return (
     <div className="av-player fade-in">
       <div className="player-hud">
-        <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
-            <div className="l">Jugador</div>
-            <div className="v" style={{ color: "var(--ink)" }}>{name}</div>
-          </div>
-          <div className="hud-stat">
-            <div className="l">Puntuación</div>
-            <div className="v">{score.toLocaleString("es-ES")}</div>
-          </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(LIVES).trim()}</div>
-          </div>
-          <div className="hud-stat level">
-            <div className="l">Nivel</div>
-            <div className="v">{String(level).padStart(2, "0")}</div>
-          </div>
-        </div>
+        <PlayerStats name={name} score={score} lives={LIVES} level={level} />
         <div className="hud-actions">
           <button type="button" className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
@@ -97,30 +82,14 @@ export function GamePlayer({ game }: { game: Game }) {
       </div>
 
       {over && (
-        <div className="modal-bd">
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
-            <h2 id="gameover-title">FIN DEL JUEGO</h2>
-            <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
-              <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) => setNameInput(e.target.value.toUpperCase().slice(0, 10))}
-                  placeholder="TUS INICIALES"
-                  aria-label="Tus iniciales"
-                />
-                <button type="button" className="btn yellow" onClick={save}>GUARDAR PUNTUACIÓN</button>
-              </div>
-            ) : (
-              <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
-            )}
-            <div className="actions">
-              <button type="button" className="btn" onClick={restart}>JUGAR DE NUEVO</button>
-              <Link href="/biblioteca" className="btn magenta">VOLVER AL VAULT</Link>
-            </div>
-          </div>
-        </div>
+        <GameOverModal
+          score={score}
+          name={name}
+          saved={saved}
+          onNameChange={setNameInput}
+          onSave={save}
+          onRestart={restart}
+        />
       )}
     </div>
   );

@@ -72,7 +72,7 @@ export const GAMES: Game[] = [
   },
   {
     id: "rocas",
-    title: "ROCAS",
+    title: "ASTEROIDS",
     short: "Pulveriza asteroides en gravedad cero.",
     long: "Tu nave triangular flota en vacío absoluto. Dispara y rota para dividir rocas en fragmentos cada vez más pequeños. Cuidado con los OVNIs en el horizonte.",
     cat: "SHOOTER",
