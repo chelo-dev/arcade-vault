@@ -1,24 +1,4 @@
-export type AsteroidsOptions = {
-  /** Se llama una vez por partida, cuando se acaban las vidas. */
-  onGameOver: (score: number) => void;
-  /** Se llama cuando la partida se reinicia (Espacio o `restart()`). */
-  onRestart: () => void;
-  /** Se llama cuando cambia la puntuación, las vidas o el nivel. */
-  onStats: (stats: AsteroidsStats) => void;
-};
-
-export type AsteroidsStats = { score: number; lives: number; level: number };
-
-export type AsteroidsControls = {
-  /** Reinicia la partida desde la app (botón JUGAR DE NUEVO). */
-  restart: () => void;
-  /** Pausa o reanuda la partida (botón PAUSA/REANUDAR). */
-  setPaused: (paused: boolean) => void;
-  /** Termina la partida en curso (botón FIN): equivale a perder la última vida. */
-  end: () => void;
-  /** Retira listeners y cancela el bucle. */
-  destroy: () => void;
-};
+import type { CreateGame } from "@/lib/games/contract";
 
 type Point = { x: number; y: number };
 
@@ -45,10 +25,10 @@ const POINTS = [0, 100, 50, 20]; // puntos por tamaño
 const GAME_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space"];
 
 /** Monta el juego sobre el canvas y arranca el bucle. */
-export function createAsteroids(
-  canvas: HTMLCanvasElement,
-  { onGameOver, onRestart, onStats }: AsteroidsOptions,
-): AsteroidsControls {
+export const createAsteroids: CreateGame = (
+  canvas,
+  { onGameOver, onRestart, onStats },
+) => {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return { restart: () => {}, setPaused: () => {}, end: () => {}, destroy: () => {} };
@@ -654,4 +634,4 @@ export function createAsteroids(
       window.removeEventListener("keyup", onKeyUp);
     },
   };
-}
+};

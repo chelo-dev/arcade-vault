@@ -4,17 +4,18 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { PlayerStats } from "@/components/player-stats";
-import { type AsteroidsControls, createAsteroids } from "@/lib/games/asteroids";
+import type { GameControls } from "@/lib/games/contract";
+import { REAL_GAMES } from "@/lib/games/registry";
 import type { Game } from "@/lib/games";
 import { recordPlay, submitScore } from "@/lib/scores-client";
 import { useSession } from "@/lib/session";
 
 const INITIAL_STATS = { score: 0, lives: 3, level: 1 };
 
-export function AsteroidsPlayer({ game }: { game: Game }) {
+export function CanvasGamePlayer({ game }: { game: Game }) {
   const { user } = useSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef<AsteroidsControls | null>(null);
+  const gameRef = useRef<GameControls | null>(null);
   const [over, setOver] = useState(false);
   const [paused, setPaused] = useState(false);
   const [stats, setStats] = useState(INITIAL_STATS);
@@ -24,12 +25,13 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
   // null = sin editar: sigue al usuario de la sesión, que se lee de localStorage tras montar.
   const [nameInput, setNameInput] = useState<string | null>(null);
 
+  const real = REAL_GAMES[game.id];
   const name = nameInput ?? user?.name ?? "INVITADO";
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const controls = createAsteroids(canvas, {
+    const controls = real.create(canvas, {
       onGameOver: () => {
         void recordPlay(game.id);
         setPaused(false);
@@ -46,7 +48,7 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
       controls.destroy();
       gameRef.current = null;
     };
-  }, [game.id]);
+  }, [game.id, real]);
 
   const togglePause = () => {
     const next = !paused;
@@ -93,10 +95,10 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
         <div className="crt-screen">
           <canvas
             ref={canvasRef}
-            width={800}
-            height={600}
-            className="asteroids-canvas"
-            aria-label="Juego Asteroids"
+            width={real.width}
+            height={real.height}
+            className="game-canvas"
+            aria-label={`Juego ${game.title}`}
           />
           {paused && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>

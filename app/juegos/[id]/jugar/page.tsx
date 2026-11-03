@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { AsteroidsPlayer } from "@/components/asteroids-player";
+import { CanvasGamePlayer } from "@/components/canvas-game-player";
 import { GamePlayer } from "@/components/game-player";
 import { GAMES } from "@/lib/games";
+import { isRealGame } from "@/lib/games/registry";
 
 export function generateStaticParams() {
   return GAMES.map((g) => ({ id: g.id }));
@@ -25,7 +26,7 @@ async function Play({
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
 
-  if (game.id === "rocas") return <AsteroidsPlayer game={game} />;
+  if (isRealGame(game.id)) return <CanvasGamePlayer game={game} />;
 
   return <GamePlayer game={game} />;
 }
