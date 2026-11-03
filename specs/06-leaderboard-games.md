@@ -29,6 +29,7 @@ SPEC 04 dejó la conexión a Supabase lista con la base vacía, y SPEC 05 dejó 
   - Tabla `public.plays` (una fila por partida terminada) con RLS análoga a `scores`. `AsteroidsPlayer` registra una fila al terminar cada partida, se guarde o no la puntuación.
   - `lib/scores.ts`: `fetchGameStats(gameId)` → `{ plays, saved, best }`, para cualquier juego.
   - El detalle sustituye los valores sembrados por datos reales: «Partidas» (partidas jugadas = filas de `plays`), «Guardadas» (puntuaciones guardadas = filas de `scores`), «Mejor global» (`max(score)`, «—» si no hay) y el bloque «MEJORES PUNTUACIONES» (top 10 con `fetchTopScores`, estado vacío «AÚN NO HAY PUNTUACIONES»).
+  - La biblioteca (`/biblioteca`, `GameCard`) muestra «MEJOR PUNTUACIÓN» real por juego con `fetchBestScores()` («—» si no hay).
   - Los 7 juegos simulados muestran el estado vacío real (0, 0, «—» y ranking vacío): no tienen datos en Supabase.
 
 **Fuera de alcance (specs futuras):**
@@ -108,6 +109,7 @@ export async function fetchTopScores(
 export async function fetchPlayableGames(): Promise<
   { id: string; title: string }[]
 >;
+export async function fetchBestScores(): Promise<Record<string, number>>; // mejor por juego jugable
 export type GameStats = { plays: number; saved: number; best: number | null };
 export async function fetchGameStats(gameId: string): Promise<GameStats>;
 
@@ -146,6 +148,7 @@ Convenciones:
 8. **(Ampliación)** Migración `plays` (tabla, índice, RLS, grants) aplicada con `apply_migration` y versionada en `supabase/migrations/`. Verificar como `anon`: insertar en `rocas` funciona, en un juego no jugable falla, `update`/`delete` no afectan filas. Limpiar filas de prueba.
 9. **(Ampliación)** `fetchGameStats` en `lib/scores.ts` y `recordPlay` en `lib/scores-client.ts`; `AsteroidsPlayer` llama a `recordPlay` una vez por partida terminada (en `onGameOver`). Verificar: tipos y lint; una partida terminada crea exactamente una fila en `plays`.
 10. **(Ampliación)** `app/juegos/[id]/page.tsx` lee `fetchGameStats` y `fetchTopScores(id, 10)` y muestra Partidas, Guardadas, Mejor global y MEJORES PUNTUACIONES reales (estado vacío para juegos sin datos). Verificar con filas de prueba en `rocas` y con un juego simulado.
+11. **(Ampliación)** `app/biblioteca/page.tsx` carga `fetchBestScores()` dentro de `<Suspense>` y pasa `bests` a `Library` → `GameCard`, que muestra la marca real (`…` cargando, `—` sin puntuaciones). Verificar: Asteroids muestra su `max(score)` y los otros 7 «—».
 
 ## Criterios de aceptación
 
@@ -170,6 +173,7 @@ Convenciones:
 - [ ] Cada partida de Asteroids que termina (se guarde o no la puntuación) crea exactamente una fila en `plays`; `GamePlayer` no escribe en `plays`.
 - [ ] En `/juegos/rocas`, «Partidas» = filas de `plays`, «Guardadas» = filas de `scores` y «Mejor global» = `max(score)`; «MEJORES PUNTUACIONES» muestra el top 10 real con fecha `dd/mm/aaaa`, ordenado igual que `/salon`.
 - [ ] En `/juegos/[id]` de un juego simulado se muestra Partidas 0, Guardadas 0, Mejor global «—» y «AÚN NO HAY PUNTUACIONES», sin errores.
+- [ ] En `/biblioteca`, la tarjeta de Asteroids muestra su `max(score)` real y las de los 7 simulados «—»; `GameCard` ya no usa `game.best`.
 - [ ] `/juegos/[id]` ya no usa `seededScores` ni `game.plays`/`game.best`.
 - [ ] No hay errores de hidratación en la consola en `/salon` ni en `/juegos/rocas/jugar`.
 - [ ] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código.

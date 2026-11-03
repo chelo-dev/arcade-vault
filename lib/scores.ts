@@ -40,6 +40,15 @@ export async function fetchPlayableGames(): Promise<
   return data;
 }
 
+// Mejor puntuación por juego jugable; los demás no tienen filas posibles (RLS), así que no aparecen.
+export async function fetchBestScores(): Promise<Record<string, number>> {
+  const games = await fetchPlayableGames();
+  const entries = await Promise.all(
+    games.map(async (g) => [g.id, (await fetchTopScores(g.id, 1))[0]?.score] as const),
+  );
+  return Object.fromEntries(entries.filter((e): e is [string, number] => e[1] !== undefined));
+}
+
 export type GameStats = { plays: number; saved: number; best: number | null };
 
 export async function fetchGameStats(gameId: string): Promise<GameStats> {

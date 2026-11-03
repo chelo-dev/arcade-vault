@@ -4,18 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PlayerBest, ScoreEntry } from "@/lib/scores";
 import { fetchPlayerBest } from "@/lib/scores-client";
+import { formatDate } from "@/lib/format-date";
 import { useSession } from "@/lib/session";
 
 export type HallGame = { id: string; title: string; scores: ScoreEntry[] };
 
 const fmt = (n: number) => n.toLocaleString("es-ES");
 const rankClass = (i: number) => (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "");
-// dd/mm/aaaa en UTC, igual en servidor y cliente (sin riesgo de hidratación).
-const fmtDate = (iso: string) => {
-  const [y, m, d] = iso.slice(0, 10).split("-");
-  return `${d}/${m}/${y}`;
-};
-
 export function HallOfFame({ games }: { games: HallGame[] }) {
   const { user } = useSession();
   const [tab, setTab] = useState(games[0]?.id);
@@ -85,7 +80,7 @@ export function HallOfFame({ games }: { games: HallGame[] }) {
                 <div className="rk">#{String(i + 1).padStart(2, "0")}</div>
                 <div className="pl">{r.player_name}</div>
                 <div className="sc">{fmt(r.score)}</div>
-                <div className="dt">{fmtDate(r.created_at)}</div>
+                <div className="dt">{formatDate(r.created_at)}</div>
               </div>
             ))}
             {user && yourBest && (
@@ -97,7 +92,7 @@ export function HallOfFame({ games }: { games: HallGame[] }) {
                   <div className="sc" style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}>
                     {fmt(yourBest.score)}
                   </div>
-                  <div className="dt">{fmtDate(yourBest.created_at)}</div>
+                  <div className="dt">{formatDate(yourBest.created_at)}</div>
                 </div>
               </>
             )}
@@ -131,7 +126,7 @@ function PodiumSlot({
       <div className="rank-num" style={champion ? { fontSize: 36, marginTop: 4 } : undefined}>{pos}</div>
       <div className="name">{row?.player_name ?? "—"}</div>
       <div className="score" style={champion ? { fontSize: 20 } : undefined}>{row ? fmt(row.score) : "—"}</div>
-      <div className="date">{row ? fmtDate(row.created_at) : ""}</div>
+      <div className="date">{row ? formatDate(row.created_at) : ""}</div>
     </div>
   );
 }
