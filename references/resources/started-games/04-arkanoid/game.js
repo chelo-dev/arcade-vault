@@ -1,268 +1,465 @@
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+// Arkanoid — MVP clásico
+// Estado global del juego (ver specs/01-mvp-arkanoid-clasico.md)
 
-const PADDLE_SPEED = 400;
-const BLOCK_COLS = 10;
-const BLOCK_ROWS = 6;
+const canvas = document.getElementById( 'game' );
+const ctx = canvas.getContext( '2d' );
+
+const state = {
+  screen: 'start', // 'start' | 'playing' | 'paused' | 'levelComplete' | 'gameOver' | 'victory'
+  level: 1, // 1..3
+  score: 0,
+  lives: 3,
+  highScore: 0, // cargado de localStorage al iniciar
+};
+
+// Paleta
+const paddle = { x: 350, y: 560, w: 100, h: 20, speed: 8 };
+
+// Bola
+const ball = { x: 400, y: 300, vx: 4, vy: -4, radius: 8 };
+
+// Ángulo máximo de rebote en la paleta (respecto a la vertical), en radianes.
+const PADDLE_MAX_BOUNCE_ANGLE = Math.PI / 3; // 60°
+
+// Velocidad base de la bola (px/frame) según el nivel (índice 0 = nivel 1).
+const BASE_SPEEDS = [ 4, 5, 6 ];
+
+function resetPaddle() {
+  paddle.x = 350;
+}
+
+function launchBall() {
+  const speed = BASE_SPEEDS[ state.level - 1 ];
+  ball.x = paddle.x + paddle.w / 2;
+  ball.y = paddle.y - ball.radius;
+  ball.vx = speed;
+  ball.vy = -speed;
+}
+
+function attachBallToPaddle() {
+  ball.x = paddle.x + paddle.w / 2;
+  ball.y = paddle.y - ball.radius;
+  ball.vx = 0;
+  ball.vy = 0;
+}
+
+function loseLife() {
+  state.lives--;
+  if ( state.lives <= 0 ) {
+    state.screen = 'gameOver';
+    return;
+  }
+  resetPaddle();
+  attachBallToPaddle();
+  state.screen = 'start';
+}
+
+function restartGame() {
+  state.level = 1;
+  state.score = 0;
+  state.lives = 3;
+  state.screen = 'start';
+  initLevel( state.level );
+  resetPaddle();
+  attachBallToPaddle();
+}
+
+// Duración de la pantalla "Nivel X completado" antes de pasar al siguiente nivel.
+const LEVEL_COMPLETE_DURATION = 2000;
+let levelCompleteStartTime = null;
+
+function checkLevelComplete() {
+  if ( blocks.length !== 0 ) return;
+  if ( state.screen === 'gameOver' || state.screen === 'levelComplete' || state.screen === 'victory' ) return;
+
+  if ( state.level < LEVELS.length ) {
+    state.screen = 'levelComplete';
+    levelCompleteStartTime = performance.now();
+  } else {
+    state.screen = 'victory';
+  }
+}
+
+function updateLevelTransition() {
+  if ( state.screen !== 'levelComplete' ) return;
+  if ( performance.now() - levelCompleteStartTime < LEVEL_COMPLETE_DURATION ) return;
+
+  state.level++;
+  initLevel( state.level );
+  resetPaddle();
+  launchBall();
+  state.screen = 'playing';
+}
+
+const bounceSound = new Audio( 'assets/sounds/ball-bounce.mp3' );
+const breakSound = new Audio( 'assets/sounds/break-sound.mp3' );
+
+function playBounceSound() {
+  bounceSound.currentTime = 0;
+  bounceSound.play().catch( () => {} );
+}
+
+function playBreakSound() {
+  breakSound.currentTime = 0;
+  breakSound.play().catch( () => {} );
+}
+
+// Geometría de la cuadrícula de bloques.
 const BLOCK_W = 64;
 const BLOCK_H = 24;
-const BLOCK_COLORS = ['red', 'yellow', 'cyan', 'magenta', 'hotpink', 'green'];
-const BLOCKS_ORIGIN_X = (800 - BLOCK_COLS * BLOCK_W) / 2;
-const BLOCKS_ORIGIN_Y = 80;
-const BASE_BALL_VX = 200;
-const BASE_BALL_VY = -300;
+const BLOCK_GAP = 4;
+const BLOCK_OFFSET_TOP = 50;
+const BLOCK_OFFSET_LEFT = ( canvas.width - ( 10 * ( BLOCK_W + BLOCK_GAP ) - BLOCK_GAP ) ) / 2;
 
-const paddle = { x: 0, y: 560, w: 81, h: 14 };
-const ball   = { x: 0, y: 0, w: 16, h: 16, vx: 200, vy: -300 };
-
-const bounceSound = new Audio('assets/sounds/ball-bounce.mp3');
-const breakSound  = new Audio('assets/sounds/break-sound.mp3');
+// Layout de cada nivel: matriz de colores (null = sin bloque en esa celda).
+const LEVELS = [
+  // Nivel 1
+  [
+    [ 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray', 'gray' ],
+    [ 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red', 'red' ],
+    [ 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow', 'yellow' ],
+    [ 'cyan', 'cyan', 'cyan', 'cyan', 'cyan', 'cyan', 'cyan', 'cyan', 'cyan', 'cyan' ],
+    [ 'magenta', 'magenta', 'magenta', 'magenta', 'magenta', 'magenta', 'magenta', 'magenta', 'magenta', 'magenta' ],
+  ],
+  // Nivel 2
+  [
+    [ 'hotpink', 'hotpink', 'green', 'green', 'gray', 'gray', 'green', 'green', 'hotpink', 'hotpink' ],
+    [ 'gray', 'red', 'red', 'yellow', 'yellow', 'yellow', 'yellow', 'red', 'red', 'gray' ],
+    [ 'cyan', 'cyan', 'magenta', 'magenta', 'gray', 'gray', 'magenta', 'magenta', 'cyan', 'cyan' ],
+    [ 'green', 'green', 'hotpink', 'hotpink', 'red', 'red', 'hotpink', 'hotpink', 'green', 'green' ],
+    [ 'gray', 'yellow', 'yellow', 'cyan', 'cyan', 'cyan', 'cyan', 'yellow', 'yellow', 'gray' ],
+    [ 'magenta', 'magenta', 'gray', 'gray', 'green', 'green', 'gray', 'gray', 'magenta', 'magenta' ],
+  ],
+  // Nivel 3
+  [
+    [ 'gray', 'red', 'gray', 'yellow', 'gray', 'gray', 'yellow', 'gray', 'red', 'gray' ],
+    [ 'red', 'hotpink', 'hotpink', 'green', 'green', 'green', 'green', 'hotpink', 'hotpink', 'red' ],
+    [ 'yellow', 'green', 'gray', 'cyan', 'cyan', 'cyan', 'cyan', 'gray', 'green', 'yellow' ],
+    [ 'gray', 'magenta', 'magenta', 'gray', 'hotpink', 'hotpink', 'gray', 'magenta', 'magenta', 'gray' ],
+    [ 'cyan', 'cyan', 'green', 'green', 'gray', 'gray', 'green', 'green', 'cyan', 'cyan' ],
+    [ 'hotpink', 'gray', 'yellow', 'yellow', 'red', 'red', 'yellow', 'yellow', 'gray', 'hotpink' ],
+    [ 'gray', 'magenta', 'gray', 'red', 'gray', 'gray', 'red', 'gray', 'magenta', 'gray' ],
+  ],
+];
 
 let blocks = [];
 let explosions = [];
-let lives = 3;
-let score = 0;
-let gameState = 'playing';
-let currentLevel = 1;
-let isPaused = false;
 
-const keys = { ArrowLeft: false, ArrowRight: false };
-
-function initPaddle() {
-  paddle.x = (canvas.width - paddle.w) / 2;
+function buildBlocksFromLayout( layout ) {
+  const result = [];
+  layout.forEach( ( row, rowIndex ) => {
+    row.forEach( ( color, colIndex ) => {
+      if ( !color ) return;
+      result.push( {
+        x: BLOCK_OFFSET_LEFT + colIndex * ( BLOCK_W + BLOCK_GAP ),
+        y: BLOCK_OFFSET_TOP + rowIndex * ( BLOCK_H + BLOCK_GAP ),
+        w: BLOCK_W,
+        h: BLOCK_H,
+        color,
+        hitsLeft: color === 'gray' ? 2 : 1,
+      } );
+    } );
+  } );
+  return result;
 }
 
-function initBall() {
-  const speed = LEVELS[currentLevel - 1].speed;
-  ball.x = paddle.x + (paddle.w - ball.w) / 2;
-  ball.y = paddle.y - ball.h;
-  ball.vx = BASE_BALL_VX * speed;
-  ball.vy = BASE_BALL_VY * speed;
+function initLevel( levelNumber ) {
+  blocks = buildBlocksFromLayout( LEVELS[ levelNumber - 1 ] );
 }
 
-function loadLevel(n) {
-  currentLevel = n;
-  const level = LEVELS[n - 1];
-  blocks = level.blocks.map(b => ({
-    x: BLOCKS_ORIGIN_X + b.col * BLOCK_W,
-    y: BLOCKS_ORIGIN_Y + b.row * BLOCK_H,
-    w: BLOCK_W,
-    h: BLOCK_H,
-    color: b.color,
-    alive: true,
-  }));
-  explosions = [];
-  ball.x = paddle.x + (paddle.w - ball.w) / 2;
-  ball.y = paddle.y - ball.h;
-  ball.vx = BASE_BALL_VX * level.speed;
-  ball.vy = BASE_BALL_VY * level.speed;
-}
+const keys = {};
+window.addEventListener( 'keydown', ( e ) => {
+  keys[ e.key ] = true;
 
-function collideAABB(block) {
-  return (
-    ball.x < block.x + block.w &&
-    ball.x + ball.w > block.x &&
-    ball.y < block.y + block.h &&
-    ball.y + ball.h > block.y
-  );
-}
+  if ( state.screen === 'gameOver' ) {
+    restartGame();
+    return;
+  }
 
-canvas.addEventListener('click', (e) => {
-  if (!isPaused) return;
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
-  for (let i = 0; i < 5; i++) {
-    const bx = PAUSE_BTN_ROW_X + i * (PAUSE_BTN_W + PAUSE_BTN_GAP);
-    if (mx >= bx && mx <= bx + PAUSE_BTN_W && my >= PAUSE_BTN_Y && my <= PAUSE_BTN_Y + PAUSE_BTN_H) {
-      loadLevel(i + 1);
-      isPaused = false;
-      return;
+  if ( state.screen === 'start' ) {
+    if ( e.key === ' ' ) {
+      launchBall();
+      state.screen = 'playing';
+    }
+    return;
+  }
+
+  const isPauseKey = e.key === 'Escape' || e.key === 'p' || e.key === 'P';
+  if ( isPauseKey ) {
+    if ( state.screen === 'playing' ) {
+      state.screen = 'paused';
+    } else if ( state.screen === 'paused' ) {
+      state.screen = 'playing';
     }
   }
-});
+} );
+window.addEventListener( 'keyup', ( e ) => { keys[ e.key ] = false; } );
 
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const mouseX = (e.clientX - rect.left) * scaleX;
-  paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, mouseX - paddle.w / 2));
-});
+function isLeftPressed() {
+  return keys[ 'ArrowLeft' ] || keys[ 'a' ] || keys[ 'A' ];
+}
 
-document.addEventListener('keydown', (e) => {
-  if (e.key in keys) keys[e.key] = true;
-  if ((e.key === 'p' || e.key === 'P' || e.key === 'Escape') && gameState === 'playing') {
-    isPaused = !isPaused;
-  }
-});
+function isRightPressed() {
+  return keys[ 'ArrowRight' ] || keys[ 'd' ] || keys[ 'D' ];
+}
 
-document.addEventListener('keyup', (e) => {
-  if (e.key in keys) keys[e.key] = false;
-});
+function updatePaddle() {
+  if ( isLeftPressed() ) paddle.x -= paddle.speed;
+  if ( isRightPressed() ) paddle.x += paddle.speed;
+  paddle.x = Math.max( 0, Math.min( canvas.width - paddle.w, paddle.x ) );
+}
 
-function update(dt) {
-  if (gameState !== 'playing') return;
+function updateBall() {
+  const prevX = ball.x;
+  const prevY = ball.y;
 
-  // Paddle
-  if (keys.ArrowLeft)  paddle.x = Math.max(0, paddle.x - PADDLE_SPEED * dt);
-  if (keys.ArrowRight) paddle.x = Math.min(canvas.width - paddle.w, paddle.x + PADDLE_SPEED * dt);
+  ball.x += ball.vx;
+  ball.y += ball.vy;
 
-  // Ball movement
-  ball.x += ball.vx * dt;
-  ball.y += ball.vy * dt;
-
-  // Wall bounces (left, right, top)
-  if (ball.x <= 0) { ball.x = 0; ball.vx = Math.abs(ball.vx); bounceSound.cloneNode().play(); }
-  if (ball.x + ball.w >= canvas.width) { ball.x = canvas.width - ball.w; ball.vx = -Math.abs(ball.vx); bounceSound.cloneNode().play(); }
-  if (ball.y <= 0) { ball.y = 0; ball.vy = Math.abs(ball.vy); bounceSound.cloneNode().play(); }
-
-  // Paddle bounce
-  if (
-    ball.vy > 0 &&
-    ball.x + ball.w > paddle.x &&
-    ball.x < paddle.x + paddle.w &&
-    ball.y + ball.h >= paddle.y &&
-    ball.y + ball.h <= paddle.y + paddle.h + 8
-  ) {
-    ball.y = paddle.y - ball.h;
-    ball.vy = -Math.abs(ball.vy);
-    bounceSound.cloneNode().play();
+  // Borde inferior: la bola cayó por debajo de la paleta, se pierde una vida.
+  if ( ball.y - ball.radius > canvas.height ) {
+    loseLife();
+    return;
   }
 
-  // Block collisions
-  for (const block of blocks) {
-    if (!block.alive) continue;
-    if (collideAABB(block)) {
-      block.alive = false;
-      explosions.push({ x: block.x, y: block.y, w: block.w, h: block.h, color: block.color, elapsed: 0 });
-      score += 10;
-      ball.vy = -ball.vy;
-      breakSound.cloneNode().play();
-      if (blocks.every(b => !b.alive)) {
-        if (currentLevel < 5) loadLevel(currentLevel + 1);
-        else gameState = 'win';
-      }
-      break; // one block per frame
-    }
+  // Pared izquierda / derecha
+  if ( ball.x - ball.radius <= 0 ) {
+    ball.x = ball.radius;
+    ball.vx = Math.abs( ball.vx );
+    playBounceSound();
+  } else if ( ball.x + ball.radius >= canvas.width ) {
+    ball.x = canvas.width - ball.radius;
+    ball.vx = -Math.abs( ball.vx );
+    playBounceSound();
   }
 
-  // Explosions
-  for (const exp of explosions) exp.elapsed += dt * 1000;
-  explosions = explosions.filter(exp => exp.elapsed < EXPLOSION_DURATION);
+  // Pared superior
+  if ( ball.y - ball.radius <= 0 ) {
+    ball.y = ball.radius;
+    ball.vy = Math.abs( ball.vy );
+    playBounceSound();
+  }
 
-  // Ball lost
-  if (ball.y > canvas.height) {
-    lives--;
-    if (lives <= 0) {
-      lives = 0;
-      gameState = 'gameover';
-    } else {
-      initBall();
-    }
+  // Paleta: se detecta el cruce entre el frame anterior y el actual para
+  // evitar que la bola la atraviese en frames de alta velocidad (tunneling).
+  const crossedPaddleTop = prevY + ball.radius <= paddle.y && ball.y + ball.radius >= paddle.y;
+  const withinPaddleX = ball.x + ball.radius >= paddle.x && ball.x - ball.radius <= paddle.x + paddle.w;
+  if ( ball.vy > 0 && crossedPaddleTop && withinPaddleX ) {
+    ball.y = paddle.y - ball.radius;
+
+    const hitPoint = ( ball.x - ( paddle.x + paddle.w / 2 ) ) / ( paddle.w / 2 ); // -1..1
+    const clampedHitPoint = Math.max( -1, Math.min( 1, hitPoint ) );
+    const angle = clampedHitPoint * PADDLE_MAX_BOUNCE_ANGLE;
+    const speed = Math.hypot( ball.vx, ball.vy );
+
+    ball.vx = speed * Math.sin( angle );
+    ball.vy = -speed * Math.cos( angle );
+    playBounceSound();
   }
 }
 
-function drawOverlay(message) {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 64px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+function circleIntersectsBlock( block ) {
+  const closestX = Math.max( block.x, Math.min( ball.x, block.x + block.w ) );
+  const closestY = Math.max( block.y, Math.min( ball.y, block.y + block.h ) );
+  const dx = ball.x - closestX;
+  const dy = ball.y - closestY;
+  return ( dx * dx + dy * dy ) <= ball.radius * ball.radius;
 }
 
-const PAUSE_BTN_W = 60;
-const PAUSE_BTN_H = 40;
-const PAUSE_BTN_GAP = 12;
-const PAUSE_BTN_Y = 340;
-const PAUSE_BTN_ROW_X = (canvas.width - (5 * PAUSE_BTN_W + 4 * PAUSE_BTN_GAP)) / 2;
+function resolveBlockBounce( block ) {
+  const overlapLeft = ( ball.x + ball.radius ) - block.x;
+  const overlapRight = ( block.x + block.w ) - ( ball.x - ball.radius );
+  const overlapTop = ( ball.y + ball.radius ) - block.y;
+  const overlapBottom = ( block.y + block.h ) - ( ball.y - ball.radius );
+  const minOverlap = Math.min( overlapLeft, overlapRight, overlapTop, overlapBottom );
 
-function drawPauseOverlay() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 56px monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('PAUSA', canvas.width / 2, 260);
-
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText('Saltar al nivel:', canvas.width / 2, 310);
-
-  for (let i = 0; i < 5; i++) {
-    const bx = PAUSE_BTN_ROW_X + i * (PAUSE_BTN_W + PAUSE_BTN_GAP);
-    const isActive = (i + 1) === currentLevel;
-    ctx.fillStyle = isActive ? '#f0c040' : '#444';
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(bx, PAUSE_BTN_Y, PAUSE_BTN_W, PAUSE_BTN_H, 6);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = isActive ? '#000' : '#fff';
-    ctx.font = 'bold 20px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(i + 1, bx + PAUSE_BTN_W / 2, PAUSE_BTN_Y + PAUSE_BTN_H / 2);
+  if ( minOverlap === overlapLeft || minOverlap === overlapRight ) {
+    ball.vx = -ball.vx;
+  } else {
+    ball.vy = -ball.vy;
   }
+}
+
+function spawnExplosion( block ) {
+  explosions.push( {
+    x: block.x,
+    y: block.y,
+    w: block.w,
+    h: block.h,
+    color: block.color,
+    startTime: performance.now(),
+  } );
+}
+
+function updateBlocks() {
+  for ( let i = 0; i < blocks.length; i++ ) {
+    const block = blocks[ i ];
+    if ( !circleIntersectsBlock( block ) ) continue;
+
+    resolveBlockBounce( block );
+    block.hitsLeft--;
+
+    if ( block.hitsLeft <= 0 ) {
+      blocks.splice( i, 1 );
+      state.score += 10;
+      playBreakSound();
+      spawnExplosion( block );
+    }
+
+    break; // un solo bloque por frame es suficiente (no se solapan)
+  }
+}
+
+function updateExplosions() {
+  const now = performance.now();
+  explosions = explosions.filter( ( ex ) => now - ex.startTime < EXPLOSION_DURATION * EXPLOSION_FRAMES[ ex.color ].length );
 }
 
 function draw() {
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect( 0, 0, canvas.width, canvas.height );
+  drawSprite( ctx, 'paddle', paddle.x, paddle.y, paddle.w, paddle.h );
+  drawSprite( ctx, 'ball', ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2 );
 
-  for (const block of blocks) {
-    if (block.alive) drawSprite(ctx, 'block_' + block.color, block.x, block.y, block.w, block.h);
+  blocks.forEach( ( block ) => {
+    drawSprite( ctx, `block_${ block.color }`, block.x, block.y, block.w, block.h );
+  } );
+
+  const now = performance.now();
+  explosions.forEach( ( ex ) => {
+    const frames = EXPLOSION_FRAMES[ ex.color ];
+    const frameIndex = Math.min( frames.length - 1, Math.floor( ( now - ex.startTime ) / EXPLOSION_DURATION ) );
+    drawFrame( ctx, frames[ frameIndex ], ex.x, ex.y, ex.w, ex.h );
+  } );
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px monospace';
+  ctx.fillText( `Puntaje: ${ state.score }`, 10, 20 );
+
+  const LIFE_ICON_SIZE = 16;
+  const LIFE_ICON_GAP = 6;
+  ctx.fillText( 'Vidas:', 10, 40 );
+  for ( let i = 0; i < state.lives; i++ ) {
+    const iconX = 70 + i * ( LIFE_ICON_SIZE + LIFE_ICON_GAP );
+    drawSprite( ctx, 'ball', iconX, 40 - LIFE_ICON_SIZE + 4, LIFE_ICON_SIZE, LIFE_ICON_SIZE );
   }
 
-  for (const exp of explosions) {
-    const frameIndex = Math.min(Math.floor(exp.elapsed / EXPLOSION_DURATION * 4), 3);
-    drawFrame(ctx, EXPLOSION_FRAMES[exp.color][frameIndex], exp.x, exp.y, exp.w, exp.h);
+  if ( state.screen === 'gameOver' ) {
+    drawGameOverOverlay();
   }
 
-  drawSprite(ctx, 'paddle', paddle.x, paddle.y, paddle.w, paddle.h);
-  drawSprite(ctx, 'ball', ball.x, ball.y, ball.w, ball.h);
-
-  if (gameState === 'playing') {
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 18px monospace';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('Score: ' + score, 10, 10);
-    ctx.textAlign = 'center';
-    ctx.fillText('Nivel: ' + currentLevel, canvas.width / 2, 10);
-    const ballSize = 16;
-    const ballSpacing = 4;
-    for (let i = 0; i < lives; i++) {
-      const bx = canvas.width - 10 - (lives - i) * (ballSize + ballSpacing);
-      drawSprite(ctx, 'ball', bx, 10, ballSize, ballSize);
-    }
+  if ( state.screen === 'levelComplete' ) {
+    drawLevelCompleteOverlay();
   }
 
-  if (gameState === 'gameover') drawOverlay('GAME OVER');
-  if (gameState === 'win')      drawOverlay('¡Completaste el juego!');
-  if (isPaused)                 drawPauseOverlay();
+  if ( state.screen === 'start' ) {
+    drawStartOverlay();
+  }
+
+  if ( state.screen === 'paused' ) {
+    drawPausedOverlay();
+  }
+
+  if ( state.screen === 'victory' ) {
+    drawVictoryOverlay();
+  }
 }
 
-let lastTime = null;
+function drawVictoryOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect( 0, 0, canvas.width, canvas.height );
 
-function loop(timestamp) {
-  if (lastTime === null) lastTime = timestamp;
-  const dt = (timestamp - lastTime) / 1000;
-  lastTime = timestamp;
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
 
-  if (!isPaused) update(dt);
+  ctx.font = '48px monospace';
+  ctx.fillText( '¡VICTORIA!', canvas.width / 2, canvas.height / 2 - 40 );
+
+  ctx.font = '24px monospace';
+  ctx.fillText( `Puntaje final: ${ state.score }`, canvas.width / 2, canvas.height / 2 );
+
+  ctx.textAlign = 'left';
+}
+
+function drawStartOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect( 0, 0, canvas.width, canvas.height );
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+
+  ctx.font = '48px monospace';
+  ctx.fillText( 'ARKANOID', canvas.width / 2, canvas.height / 2 - 40 );
+
+  ctx.font = '24px monospace';
+  const message = ( state.level === 1 && state.score === 0 )
+    ? 'Presiona SPACE para jugar'
+    : 'Presiona SPACE para continuar';
+  ctx.fillText( message, canvas.width / 2, canvas.height / 2 );
+  ctx.fillText( `High Score: ${ state.highScore }`, canvas.width / 2, canvas.height / 2 + 40 );
+
+  ctx.textAlign = 'left';
+}
+
+function drawPausedOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect( 0, 0, canvas.width, canvas.height );
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.font = '36px monospace';
+  ctx.fillText( 'PAUSA', canvas.width / 2, canvas.height / 2 );
+  ctx.font = '18px monospace';
+  ctx.fillText( 'Presiona Escape o P para continuar', canvas.width / 2, canvas.height / 2 + 30 );
+  ctx.textAlign = 'left';
+}
+
+function drawLevelCompleteOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect( 0, 0, canvas.width, canvas.height );
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.font = '36px monospace';
+  ctx.fillText( `¡Nivel ${ state.level } completado!`, canvas.width / 2, canvas.height / 2 );
+  ctx.textAlign = 'left';
+}
+
+function drawGameOverOverlay() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect( 0, 0, canvas.width, canvas.height );
+
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+
+  ctx.font = '48px monospace';
+  ctx.fillText( 'GAME OVER', canvas.width / 2, canvas.height / 2 - 40 );
+
+  ctx.font = '24px monospace';
+  ctx.fillText( `Puntaje final: ${ state.score }`, canvas.width / 2, canvas.height / 2 );
+  ctx.fillText( 'Presiona una tecla para reiniciar', canvas.width / 2, canvas.height / 2 + 40 );
+
+  ctx.textAlign = 'left';
+}
+
+function loop() {
+  if ( state.screen === 'playing' ) {
+    updatePaddle();
+    updateBall();
+    updateBlocks();
+    updateExplosions();
+    checkLevelComplete();
+  }
+  if ( state.screen === 'start' ) {
+    updatePaddle();
+    attachBallToPaddle();
+  }
+  updateLevelTransition();
   draw();
-
-  requestAnimationFrame(loop);
+  requestAnimationFrame( loop );
 }
 
-loadSpritesheet(() => {
-  initPaddle();
-  loadLevel(1);
-  requestAnimationFrame(loop);
-});
+loadSpritesheet( () => {
+  initLevel( state.level );
+  attachBallToPaddle();
+  requestAnimationFrame( loop );
+} );
