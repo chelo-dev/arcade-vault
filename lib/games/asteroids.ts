@@ -1,6 +1,23 @@
 export type AsteroidsOptions = {
   /** Se llama una vez por partida, cuando se acaban las vidas. */
   onGameOver: (score: number) => void;
+  /** Se llama cuando la partida se reinicia (Espacio o `restart()`). */
+  onRestart: () => void;
+  /** Se llama cuando cambia la puntuación, las vidas o el nivel. */
+  onStats: (stats: AsteroidsStats) => void;
+};
+
+export type AsteroidsStats = { score: number; lives: number; level: number };
+
+export type AsteroidsControls = {
+  /** Reinicia la partida desde la app (botón JUGAR DE NUEVO). */
+  restart: () => void;
+  /** Pausa o reanuda la partida (botón PAUSA/REANUDAR). */
+  setPaused: (paused: boolean) => void;
+  /** Termina la partida en curso (botón FIN): equivale a perder la última vida. */
+  end: () => void;
+  /** Retira listeners y cancela el bucle. */
+  destroy: () => void;
 };
 
 type Point = { x: number; y: number };
@@ -27,25 +44,33 @@ const POINTS = [0, 100, 50, 20]; // puntos por tamaño
 // Teclas del juego: se les hace preventDefault para que no hagan scroll
 const GAME_KEYS = ["ArrowLeft", "ArrowRight", "ArrowUp", "Space"];
 
-/** Monta el juego sobre el canvas y arranca el bucle. Devuelve la función de limpieza. */
+/** Monta el juego sobre el canvas y arranca el bucle. */
 export function createAsteroids(
   canvas: HTMLCanvasElement,
-  { onGameOver }: AsteroidsOptions,
-): () => void {
+  { onGameOver, onRestart, onStats }: AsteroidsOptions,
+): AsteroidsControls {
   const ctx = canvas.getContext("2d");
-  if (!ctx) return () => {};
+  if (!ctx) {
+    return { restart: () => {}, setPaused: () => {}, end: () => {}, destroy: () => {} };
+  }
 
   // ── Input ───────────────────────────────────────────────────────────────────
 
   const keys: Record<string, boolean> = {};
   const justPressed: Record<string, boolean> = {};
 
+  // Los campos de texto de la app (modal) no deben controlar el juego.
+  const isTyping = (e: KeyboardEvent) =>
+    e.target instanceof HTMLElement && !!e.target.closest("input, textarea");
+
   const onKeyDown = (e: KeyboardEvent) => {
+    if (isTyping(e)) return;
     if (GAME_KEYS.includes(e.code)) e.preventDefault();
     if (!keys[e.code]) justPressed[e.code] = true;
     keys[e.code] = true;
   };
   const onKeyUp = (e: KeyboardEvent) => {
+    if (isTyping(e)) return;
     if (GAME_KEYS.includes(e.code)) e.preventDefault();
     keys[e.code] = false;
   };
@@ -400,6 +425,25 @@ export function createAsteroids(
     spawnAsteroids(4);
   }
 
+  let paused = false;
+
+  function setPaused(value: boolean) {
+    paused = value;
+    justPressed["Space"] = false; // descarta un disparo pulsado durante la pausa
+  }
+
+  function end() {
+    if (state === "gameover") return;
+    paused = false;
+    lives = 1;
+    killShip();
+  }
+
+  function restart() {
+    initGame();
+    onRestart();
+  }
+
   function nextLevel() {
     level++;
     bullets = [];
@@ -431,7 +475,7 @@ export function createAsteroids(
   // ── Update ──────────────────────────────────────────────────────────────────
   function update(dt: number) {
     if (state === "gameover") {
-      if (pressed("Space")) initGame();
+      if (pressed("Space")) restart();
       particles.forEach((p) => p.update(dt));
       particles = particles.filter((p) => !p.dead);
       return;
@@ -578,21 +622,36 @@ export function createAsteroids(
   // ── Loop principal ──────────────────────────────────────────────────────────
   let lastTime: number | null = null;
   let rafId = 0;
+  let lastStats = "";
+
+  // Notifica a la app solo cuando cambian puntuación, vidas o nivel.
+  function emitStats() {
+    const key = `${score}|${lives}|${level}`;
+    if (key === lastStats) return;
+    lastStats = key;
+    onStats({ score, lives, level });
+  }
 
   function loop(ts: number) {
     const dt = lastTime === null ? 0 : Math.min((ts - lastTime) / 1000, 0.05);
     lastTime = ts;
-    update(dt);
+    if (!paused) update(dt);
     draw();
+    emitStats();
     rafId = requestAnimationFrame(loop);
   }
 
   initGame();
   rafId = requestAnimationFrame(loop);
 
-  return () => {
-    cancelAnimationFrame(rafId);
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("keyup", onKeyUp);
+  return {
+    restart,
+    setPaused,
+    end,
+    destroy: () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    },
   };
 }

@@ -2,48 +2,69 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { createAsteroids } from "@/lib/games/asteroids";
+import { GameOverModal } from "@/components/game-over-modal";
+import { PlayerStats } from "@/components/player-stats";
+import { type AsteroidsControls, createAsteroids } from "@/lib/games/asteroids";
+import type { Game } from "@/lib/games";
 import { useSession } from "@/lib/session";
 
-const GAME_ID = "rocas";
+const INITIAL_STATS = { score: 0, lives: 3, level: 1 };
 
-export function AsteroidsPlayer() {
+export function AsteroidsPlayer({ game }: { game: Game }) {
   const { user, saveScore } = useSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<AsteroidsControls | null>(null);
+  const [over, setOver] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [stats, setStats] = useState(INITIAL_STATS);
   const [saved, setSaved] = useState(false);
+  // null = sin editar: sigue al usuario de la sesión, que se lee de localStorage tras montar.
+  const [nameInput, setNameInput] = useState<string | null>(null);
 
-  // El juego se monta una sola vez; el callback lee siempre la sesión actual.
-  const onGameOverRef = useRef<(score: number) => void>(() => {});
-  useEffect(() => {
-    onGameOverRef.current = (score) => {
-      saveScore({ game: GAME_ID, score, name: user?.name ?? "INVITADO" });
-      setSaved(true);
-    };
-  }, [saveScore, user]);
+  const name = nameInput ?? user?.name ?? "INVITADO";
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    return createAsteroids(canvas, {
-      onGameOver: (score) => onGameOverRef.current(score),
+    const controls = createAsteroids(canvas, {
+      onGameOver: () => {
+        setPaused(false);
+        setSaved(false);
+        setOver(true);
+      },
+      onRestart: () => setOver(false),
+      onStats: setStats,
     });
+    gameRef.current = controls;
+    return () => {
+      controls.destroy();
+      gameRef.current = null;
+    };
   }, []);
 
-  // Tras Game Over, Espacio reinicia la partida: se oculta el aviso.
-  useEffect(() => {
-    if (!saved) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") setSaved(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [saved]);
+  const togglePause = () => {
+    const next = !paused;
+    setPaused(next);
+    gameRef.current?.setPaused(next);
+  };
+
+  const save = () => {
+    saveScore({ game: game.id, score: stats.score, name: name.trim() || "INVITADO" });
+    setSaved(true);
+  };
 
   return (
     <div className="av-player fade-in">
       <div className="player-hud">
+        <PlayerStats name={name} score={stats.score} lives={stats.lives} level={stats.level} />
         <div className="hud-actions">
-          <Link href={`/juegos/${GAME_ID}`} className="btn ghost">
+          <button type="button" className="btn yellow" onClick={togglePause} disabled={over}>
+            {paused ? "REANUDAR" : "PAUSA"}
+          </button>
+          <button type="button" className="btn magenta" onClick={() => gameRef.current?.end()} disabled={over}>
+            FIN
+          </button>
+          <Link href={`/juegos/${game.id}`} className="btn ghost">
             SALIR
           </Link>
         </div>
@@ -58,18 +79,33 @@ export function AsteroidsPlayer() {
             className="asteroids-canvas"
             aria-label="Juego Asteroids"
           />
+          {paused && (
+            <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
+              <div>
+                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>EN PAUSA</div>
+                <div className="mono" style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 10, letterSpacing: "0.16em" }}>
+                  PULSA REANUDAR PARA CONTINUAR
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="crt-bottom">
           <span className="led">SEÑAL OK</span>
-          <span>ROCAS · CRT-83 · 60 HZ</span>
+          <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
       </div>
 
-      {saved && (
-        <div style={{ textAlign: "center" }} role="status">
-          <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
-        </div>
+      {over && (
+        <GameOverModal
+          score={stats.score}
+          name={name}
+          saved={saved}
+          onNameChange={setNameInput}
+          onSave={save}
+          onRestart={() => gameRef.current?.restart()}
+        />
       )}
     </div>
   );

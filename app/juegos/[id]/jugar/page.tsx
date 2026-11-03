@@ -25,7 +25,7 @@ async function Play({
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
 
-  if (game.id === "rocas") return <AsteroidsPlayer />;
+  if (game.id === "rocas") return <AsteroidsPlayer game={game} />;
 
   return <GamePlayer game={game} />;
 }
