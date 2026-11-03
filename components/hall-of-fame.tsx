@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import type { ScoreEntry } from "@/lib/scores";
+import { useEffect, useState } from "react";
+import type { PlayerBest, ScoreEntry } from "@/lib/scores";
+import { fetchPlayerBest } from "@/lib/scores-client";
+import { useSession } from "@/lib/session";
 
 export type HallGame = { id: string; title: string; scores: ScoreEntry[] };
 
@@ -15,7 +17,26 @@ const fmtDate = (iso: string) => {
 };
 
 export function HallOfFame({ games }: { games: HallGame[] }) {
+  const { user } = useSession();
   const [tab, setTab] = useState(games[0]?.id);
+  // El resultado lleva su clave (juego + nombre) para ignorar respuestas de otra pestaña o usuario.
+  const [best, setBest] = useState<{ key: string; value: PlayerBest | null } | null>(null);
+
+  const name = user?.name;
+  const bestKey = tab && name ? `${tab}:${name}` : null;
+
+  useEffect(() => {
+    if (!tab || !name) return;
+    let cancelled = false;
+    fetchPlayerBest(tab, name)
+      .then((value) => !cancelled && setBest({ key: `${tab}:${name}`, value }))
+      .catch(() => !cancelled && setBest(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, name]);
+
+  const yourBest = best && best.key === bestKey ? best.value : null;
 
   const game = games.find((g) => g.id === tab);
   const rows = game?.scores ?? [];
@@ -67,6 +88,19 @@ export function HallOfFame({ games }: { games: HallGame[] }) {
                 <div className="dt">{fmtDate(r.created_at)}</div>
               </div>
             ))}
+            {user && yourBest && (
+              <>
+                <div className="tr you-label">▸ TU MEJOR MARCA EN {game?.title}</div>
+                <div className="tr you">
+                  <div className="rk" style={{ color: "var(--yellow)" }}>#{String(yourBest.rank).padStart(2, "0")}</div>
+                  <div className="pl" style={{ color: "var(--yellow)" }}>{user.name}</div>
+                  <div className="sc" style={{ color: "var(--yellow)", textShadow: "0 0 6px rgba(245,255,0,0.5)" }}>
+                    {fmt(yourBest.score)}
+                  </div>
+                  <div className="dt">{fmtDate(yourBest.created_at)}</div>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

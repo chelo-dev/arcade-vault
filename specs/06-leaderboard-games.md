@@ -24,7 +24,12 @@ SPEC 04 dejó la conexión a Supabase lista con la base vacía, y SPEC 05 dejó 
   - `HallOfFame` recibe esos datos por props; pestañas solo de juegos jugables (hoy solo ASTEROIDS), podio top 3 y tabla de 12 con el diseño actual.
   - Estado vacío «AÚN NO HAY PUNTUACIONES» cuando el juego no tiene filas.
   - Fila «TU MEJOR MARCA EN {juego}»: se muestra solo si hay sesión y existe al menos una puntuación con el `user.name`; rango = filas con mayor puntuación + 1. Se consulta desde el cliente tras montar.
-- Se retira `seededScores` de `components/hall-of-fame.tsx` (la función sigue en `lib/games.ts` porque el detalle de juego la usa).
+- Se retira `seededScores` de `components/hall-of-fame.tsx` (la función sigue en `lib/games.ts` porque la home la usa).
+- **Detalle `/juegos/[id]` con estadísticas reales (ampliación):**
+  - Tabla `public.plays` (una fila por partida terminada) con RLS análoga a `scores`. `AsteroidsPlayer` registra una fila al terminar cada partida, se guarde o no la puntuación.
+  - `lib/scores.ts`: `fetchGameStats(gameId)` → `{ plays, saved, best }`, para cualquier juego.
+  - El detalle sustituye los valores sembrados por datos reales: «Partidas» (partidas jugadas = filas de `plays`), «Guardadas» (puntuaciones guardadas = filas de `scores`), «Mejor global» (`max(score)`, «—» si no hay) y el bloque «MEJORES PUNTUACIONES» (top 10 con `fetchTopScores`, estado vacío «AÚN NO HAY PUNTUACIONES»).
+  - Los 7 juegos simulados muestran el estado vacío real (0, 0, «—» y ranking vacío): no tienen datos en Supabase.
 
 **Fuera de alcance (specs futuras):**
 
@@ -32,7 +37,8 @@ SPEC 04 dejó la conexión a Supabase lista con la base vacía, y SPEC 05 dejó 
 - Medidas anti-trampas: servidor autoritativo, firma de puntuaciones, límite de frecuencia, validación de la partida.
 - Migrar el catálogo (`biblioteca`, detalle, home) para que lea de `games`: siguen leyendo `lib/games.ts`.
 - Los 7 juegos simulados: `GamePlayer` sigue guardando en `av_scores` (localStorage) y no aparecen en el salón.
-- Detalle `/juegos/[id]` y actividad/top de la home: siguen con datos sembrados.
+- Actividad/top de la home y textos de marketing de `lib/home.ts`: siguen con datos sembrados. (El detalle `/juegos/[id]` ya **no** está fuera de alcance.)
+- Registrar partidas de los 7 juegos simulados: `GamePlayer` no escribe en `plays`.
 - Filtros de periodo (hoy/semana/histórico), «mejor puntuación por jugador» o paginación del ranking.
 - Migrar o subir a Supabase las puntuaciones que ya estén en `av_scores`.
 - Panel de administración, borrado o moderación de puntuaciones.
@@ -61,7 +67,20 @@ create table public.scores (
 create index scores_game_score_idx on public.scores (game_id, score desc, created_at);
 ```
 
-Políticas RLS (ambas tablas con RLS activado):
+Ampliación (migración `supabase/migrations/<timestamp>_plays.sql`):
+
+```sql
+create table public.plays (
+  id         uuid primary key default gen_random_uuid(),
+  game_id    text not null references public.games(id),
+  created_at timestamptz not null default now()
+);
+create index plays_game_idx on public.plays (game_id);
+```
+
+`plays`: RLS activado; SELECT para `anon`/`authenticated` (todas las filas); INSERT para `anon`/`authenticated` solo si el juego tiene `playable = true`; sin UPDATE/DELETE. Grants: `select, insert`.
+
+Políticas RLS (`games` y `scores`, ambas con RLS activado):
 
 | Tabla    | Operación     | Roles                   | Regla                                                               |
 | -------- | ------------- | ----------------------- | ------------------------------------------------------------------- |
@@ -89,6 +108,8 @@ export async function fetchTopScores(
 export async function fetchPlayableGames(): Promise<
   { id: string; title: string }[]
 >;
+export type GameStats = { plays: number; saved: number; best: number | null };
+export async function fetchGameStats(gameId: string): Promise<GameStats>;
 
 // Navegador (cliente de lib/supabase/client.ts)
 export async function submitScore(input: {
@@ -100,7 +121,10 @@ export async function fetchPlayerBest(
   gameId: string,
   playerName: string,
 ): Promise<PlayerBest | null>;
+export async function recordPlay(gameId: string): Promise<void>; // fallo silencioso: no interrumpe la partida
 ```
+
+> Implementación: por el límite servidor/cliente de Next (`next/headers`), las funciones de navegador viven en `lib/scores-client.ts` y los tipos y funciones de servidor en `lib/scores.ts`.
 
 Convenciones:
 
@@ -119,6 +143,9 @@ Convenciones:
 5. Conectar `AsteroidsPlayer` a `submitScore` y añadir a `GameOverModal` las props opcionales `saving` y `error` (por defecto inactivas, así `GamePlayer` no cambia). Verificar en navegador: perder una partida, guardar y ver la fila en `scores` con `execute_sql`; con la red cortada aparece el error y el botón permite reintentar.
 6. Crear el componente de servidor de `/salon` (carga de juegos jugables y top 12 en paralelo dentro de `<Suspense>`) y cambiar `HallOfFame` para recibir los datos por props, mostrar el estado vacío y quitar `seededScores`. Verificar: `/salon` muestra la partida guardada en el podio y la tabla, con formato `dd/mm/aaaa`.
 7. Añadir la fila «TU MEJOR MARCA» en `HallOfFame` con `fetchPlayerBest` (efecto tras montar, solo con sesión). Verificar: con sesión y una puntuación aparece con rango correcto; sin sesión o sin puntuaciones no aparece.
+8. **(Ampliación)** Migración `plays` (tabla, índice, RLS, grants) aplicada con `apply_migration` y versionada en `supabase/migrations/`. Verificar como `anon`: insertar en `rocas` funciona, en un juego no jugable falla, `update`/`delete` no afectan filas. Limpiar filas de prueba.
+9. **(Ampliación)** `fetchGameStats` en `lib/scores.ts` y `recordPlay` en `lib/scores-client.ts`; `AsteroidsPlayer` llama a `recordPlay` una vez por partida terminada (en `onGameOver`). Verificar: tipos y lint; una partida terminada crea exactamente una fila en `plays`.
+10. **(Ampliación)** `app/juegos/[id]/page.tsx` lee `fetchGameStats` y `fetchTopScores(id, 10)` y muestra Partidas, Guardadas, Mejor global y MEJORES PUNTUACIONES reales (estado vacío para juegos sin datos). Verificar con filas de prueba en `rocas` y con un juego simulado.
 
 ## Criterios de aceptación
 
@@ -138,7 +165,12 @@ Convenciones:
 - [ ] Con `scores` vacío para `rocas`, `/salon` muestra «AÚN NO HAY PUNTUACIONES» sin errores.
 - [ ] Una puntuación guardada en una pestaña aparece en `/salon` al navegar allí sin recargar a mano.
 - [ ] Con sesión y al menos una puntuación con ese nombre, `/salon` muestra «TU MEJOR MARCA EN ASTEROIDS» con su mejor puntuación y su rango; sin sesión o sin puntuaciones esa fila no aparece.
-- [ ] `components/hall-of-fame.tsx` ya no importa `seededScores`; `/juegos/[id]` y la home siguen mostrando sus datos sembrados.
+- [ ] `components/hall-of-fame.tsx` ya no importa `seededScores`; la home sigue mostrando sus datos sembrados.
+- [ ] Existe `supabase/migrations/*_plays.sql` y coincide con el esquema aplicado; con la clave publicable, INSERT en `plays` de `rocas` funciona, en un juego no jugable es rechazado y UPDATE/DELETE no afectan filas.
+- [ ] Cada partida de Asteroids que termina (se guarde o no la puntuación) crea exactamente una fila en `plays`; `GamePlayer` no escribe en `plays`.
+- [ ] En `/juegos/rocas`, «Partidas» = filas de `plays`, «Guardadas» = filas de `scores` y «Mejor global» = `max(score)`; «MEJORES PUNTUACIONES» muestra el top 10 real con fecha `dd/mm/aaaa`, ordenado igual que `/salon`.
+- [ ] En `/juegos/[id]` de un juego simulado se muestra Partidas 0, Guardadas 0, Mejor global «—» y «AÚN NO HAY PUNTUACIONES», sin errores.
+- [ ] `/juegos/[id]` ya no usa `seededScores` ni `game.plays`/`game.best`.
 - [ ] No hay errores de hidratación en la consola en `/salon` ni en `/juegos/rocas/jugar`.
 - [ ] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código.
 
@@ -159,6 +191,9 @@ Convenciones:
 - **Sí:** top 12 histórico con podio, una fila por partida. Mantiene el diseño actual; filtros de periodo y «mejor por jugador» quedan fuera (un nombre libre no es identidad fiable).
 - **Sí:** «TU MEJOR MARCA» por nombre de sesión. Sustituye al valor inventado actual; puede coincidir con el nombre de otra persona, y se acepta mientras no haya auth.
 - **Sí:** tope de puntuación `10000000` en un CHECK. Es una cota de cordura, no balance de juego; se ajusta con una migración si Asteroids lo supera.
+- **Sí (ampliación, decisión del usuario):** el detalle de juego muestra estadísticas reales y se incluye en esta spec. «Partidas» cuenta partidas jugadas reales (tabla `plays`) y además se muestra «Guardadas» (puntuaciones en `scores`), porque no son lo mismo: una partida abandonada sin guardar cuenta como jugada pero no como guardada.
+- **Sí:** los 7 simulados muestran estado vacío real en el detalle (0 / — / sin ranking) en vez de datos inventados; no se registran sus partidas hasta que sean reales.
+- **Sí:** `plays` se inserta desde el navegador con RLS, igual que `scores`; el contador es inflable por un cliente manipulado (mismo riesgo aceptado que las puntuaciones).
 - **Sí:** a igual puntuación gana la fila más antigua (`created_at asc`), para que el orden sea estable y no premie al último en llegar.
 
 ## Riesgos
