@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { GameOverModal } from "@/components/game-over-modal";
 import { PlayerStats } from "@/components/player-stats";
 import type { GameControls } from "@/lib/games/contract";
@@ -27,6 +27,8 @@ export function CanvasGamePlayer({ game }: { game: Game }) {
 
   const real = REAL_GAMES[game.id];
   const name = nameInput ?? user?.name ?? "INVITADO";
+  // Los juegos más altos que anchos fijan su proporción; el resto mantiene el 4:3 del marco.
+  const tall = real.height > real.width;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -92,7 +94,10 @@ export function CanvasGamePlayer({ game }: { game: Game }) {
       </div>
 
       <div className="crt">
-        <div className="crt-screen">
+        <div
+          className={tall ? "crt-screen tall" : "crt-screen"}
+          style={tall ? ({ "--game-ratio": real.width / real.height } as CSSProperties) : undefined}
+        >
           <canvas
             ref={canvasRef}
             width={real.width}
