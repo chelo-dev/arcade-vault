@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { AsteroidsPlayer } from "@/components/asteroids-player";
 import { GamePlayer } from "@/components/game-player";
 import { GAMES } from "@/lib/games";
 
@@ -23,6 +24,8 @@ async function Play({
   const { id } = await params;
   const game = GAMES.find((g) => g.id === id);
   if (!game) notFound();
+
+  if (game.id === "rocas") return <AsteroidsPlayer />;
 
   return <GamePlayer game={game} />;
 }
