@@ -1,6 +1,6 @@
 # SPEC 06 — Leaderboard y tabla de juegos en Supabase
 
-> **Estado:** Aprobado
+> **Estado:** Implemantado
 > **Depende de:** SPEC 01, SPEC 04, SPEC 05
 > **Fecha:** 2026-11-03
 > **Objetivo:** Crear en Supabase las tablas `games` y `scores`, guardar ahí las puntuaciones de Asteroids al pulsar GUARDAR PUNTUACIÓN y hacer que `/salon` muestre el top 12 real de cada juego jugable en lugar de datos sembrados.
@@ -152,31 +152,31 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `npm run build` y `npm run lint` terminan sin errores.
-- [ ] Existe `supabase/migrations/*_games_and_scores.sql` versionada y su contenido coincide con el esquema aplicado en el proyecto.
-- [ ] `games` contiene los 8 ids de `lib/games.ts` y solo `rocas` tiene `playable = true`.
-- [ ] `get_advisors` (seguridad) no reporta tablas sin RLS en `games` ni `scores`.
-- [ ] Con la clave publicable, un INSERT en `scores` de `rocas` con nombre de 1–10 caracteres y `0 <= score <= 10000000` funciona.
-- [ ] Con la clave publicable, un INSERT en un juego con `playable = false`, con `score` negativo o mayor que 10.000.000, o con nombre vacío o de más de 10 caracteres es rechazado.
-- [ ] Con la clave publicable, UPDATE y DELETE sobre `scores` no modifican ninguna fila.
-- [ ] En `/juegos/rocas/jugar`, al perder y pulsar GUARDAR PUNTUACIÓN se crea exactamente una fila en `scores` con `game_id = 'rocas'`, la puntuación mostrada y el nombre del campo.
-- [ ] Mientras se guarda, el botón GUARDAR PUNTUACIÓN está deshabilitado; al terminar el modal muestra `▸ PUNTUACIÓN GUARDADA_`.
-- [ ] Si el guardado falla, el modal muestra un mensaje de error y el botón sigue disponible para reintentar; no aparece `▸ PUNTUACIÓN GUARDADA_`.
-- [ ] Salir de la partida o pulsar JUGAR DE NUEVO sin guardar no crea ninguna fila.
-- [ ] Asteroids ya no escribe en `localStorage.av_scores`; `GamePlayer` (los otros 7 juegos) sigue escribiendo ahí y se ve y funciona igual.
-- [ ] `/salon` muestra una única pestaña, ASTEROIDS, con podio top 3 y tabla de hasta 12 filas ordenadas por puntuación descendente y, a igual puntuación, por fecha ascendente.
-- [ ] Con `scores` vacío para `rocas`, `/salon` muestra «AÚN NO HAY PUNTUACIONES» sin errores.
-- [ ] Una puntuación guardada en una pestaña aparece en `/salon` al navegar allí sin recargar a mano.
-- [ ] Con sesión y al menos una puntuación con ese nombre, `/salon` muestra «TU MEJOR MARCA EN ASTEROIDS» con su mejor puntuación y su rango; sin sesión o sin puntuaciones esa fila no aparece.
-- [ ] `components/hall-of-fame.tsx` ya no importa `seededScores`; la home sigue mostrando sus datos sembrados.
-- [ ] Existe `supabase/migrations/*_plays.sql` y coincide con el esquema aplicado; con la clave publicable, INSERT en `plays` de `rocas` funciona, en un juego no jugable es rechazado y UPDATE/DELETE no afectan filas.
-- [ ] Cada partida de Asteroids que termina (se guarde o no la puntuación) crea exactamente una fila en `plays`; `GamePlayer` no escribe en `plays`.
-- [ ] En `/juegos/rocas`, «Partidas» = filas de `plays`, «Guardadas» = filas de `scores` y «Mejor global» = `max(score)`; «MEJORES PUNTUACIONES» muestra el top 10 real con fecha `dd/mm/aaaa`, ordenado igual que `/salon`.
-- [ ] En `/juegos/[id]` de un juego simulado se muestra Partidas 0, Guardadas 0, Mejor global «—» y «AÚN NO HAY PUNTUACIONES», sin errores.
-- [ ] En `/biblioteca`, la tarjeta de Asteroids muestra su `max(score)` real y las de los 7 simulados «—»; `GameCard` ya no usa `game.best`.
-- [ ] `/juegos/[id]` ya no usa `seededScores` ni `game.plays`/`game.best`.
-- [ ] No hay errores de hidratación en la consola en `/salon` ni en `/juegos/rocas/jugar`.
-- [ ] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código.
+- [x] `npm run build` y `npm run lint` terminan sin errores.
+- [x] Existe `supabase/migrations/*_games_and_scores.sql` versionada y su contenido coincide con el esquema aplicado en el proyecto.
+- [x] `games` contiene los 8 ids de `lib/games.ts` y solo `rocas` tiene `playable = true`.
+- [x] `get_advisors` (seguridad) no reporta tablas sin RLS en `games` ni `scores`.
+- [x] Con la clave publicable, un INSERT en `scores` de `rocas` con nombre de 1–10 caracteres y `0 <= score <= 10000000` funciona.
+- [x] Con la clave publicable, un INSERT en un juego con `playable = false`, con `score` negativo o mayor que 10.000.000, o con nombre vacío o de más de 10 caracteres es rechazado.
+- [x] Con la clave publicable, UPDATE y DELETE sobre `scores` no modifican ninguna fila.
+- [x] En `/juegos/rocas/jugar`, al perder y pulsar GUARDAR PUNTUACIÓN se crea exactamente una fila en `scores` con `game_id = 'rocas'`, la puntuación mostrada y el nombre del campo.
+- [x] Mientras se guarda, el botón GUARDAR PUNTUACIÓN está deshabilitado; al terminar el modal muestra `▸ PUNTUACIÓN GUARDADA_`.
+- [x] Si el guardado falla, el modal muestra un mensaje de error y el botón sigue disponible para reintentar; no aparece `▸ PUNTUACIÓN GUARDADA_`.
+- [x] Salir de la partida o pulsar JUGAR DE NUEVO sin guardar no crea ninguna fila.
+- [x] Asteroids ya no escribe en `localStorage.av_scores`; `GamePlayer` (los otros 7 juegos) sigue escribiendo ahí y se ve y funciona igual.
+- [x] `/salon` muestra una única pestaña, ASTEROIDS, con podio top 3 y tabla de hasta 12 filas ordenadas por puntuación descendente y, a igual puntuación, por fecha ascendente.
+- [x] Con `scores` vacío para `rocas`, `/salon` muestra «AÚN NO HAY PUNTUACIONES» sin errores.
+- [x] Una puntuación guardada en una pestaña aparece en `/salon` al navegar allí sin recargar a mano.
+- [x] Con sesión y al menos una puntuación con ese nombre, `/salon` muestra «TU MEJOR MARCA EN ASTEROIDS» con su mejor puntuación y su rango; sin sesión o sin puntuaciones esa fila no aparece.
+- [x] `components/hall-of-fame.tsx` ya no importa `seededScores`; la home sigue mostrando sus datos sembrados.
+- [x] Existe `supabase/migrations/*_plays.sql` y coincide con el esquema aplicado; con la clave publicable, INSERT en `plays` de `rocas` funciona, en un juego no jugable es rechazado y UPDATE/DELETE no afectan filas.
+- [x] Cada partida de Asteroids que termina (se guarde o no la puntuación) crea exactamente una fila en `plays`; `GamePlayer` no escribe en `plays`.
+- [x] En `/juegos/rocas`, «Partidas» = filas de `plays`, «Guardadas» = filas de `scores` y «Mejor global» = `max(score)`; «MEJORES PUNTUACIONES» muestra el top 10 real con fecha `dd/mm/aaaa`, ordenado igual que `/salon`.
+- [x] En `/juegos/[id]` de un juego simulado se muestra Partidas 0, Guardadas 0, Mejor global «—» y «AÚN NO HAY PUNTUACIONES», sin errores.
+- [x] En `/biblioteca`, la tarjeta de Asteroids muestra su `max(score)` real y las de los 7 simulados «—»; `GameCard` ya no usa `game.best`.
+- [x] `/juegos/[id]` ya no usa `seededScores` ni `game.plays`/`game.best`.
+- [x] No hay errores de hidratación en la consola en `/salon` ni en `/juegos/rocas/jugar`.
+- [x] Ninguna clave `service_role` ni contraseña de Postgres aparece en el código.
 
 ## Decisiones
 
