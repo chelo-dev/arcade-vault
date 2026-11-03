@@ -6,18 +6,21 @@ import { GameOverModal } from "@/components/game-over-modal";
 import { PlayerStats } from "@/components/player-stats";
 import { type AsteroidsControls, createAsteroids } from "@/lib/games/asteroids";
 import type { Game } from "@/lib/games";
+import { submitScore } from "@/lib/scores-client";
 import { useSession } from "@/lib/session";
 
 const INITIAL_STATS = { score: 0, lives: 3, level: 1 };
 
 export function AsteroidsPlayer({ game }: { game: Game }) {
-  const { user, saveScore } = useSession();
+  const { user } = useSession();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<AsteroidsControls | null>(null);
   const [over, setOver] = useState(false);
   const [paused, setPaused] = useState(false);
   const [stats, setStats] = useState(INITIAL_STATS);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // null = sin editar: sigue al usuario de la sesión, que se lee de localStorage tras montar.
   const [nameInput, setNameInput] = useState<string | null>(null);
 
@@ -30,6 +33,8 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
       onGameOver: () => {
         setPaused(false);
         setSaved(false);
+        setSaving(false);
+        setSaveError(null);
         setOver(true);
       },
       onRestart: () => setOver(false),
@@ -48,9 +53,22 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
     gameRef.current?.setPaused(next);
   };
 
-  const save = () => {
-    saveScore({ game: game.id, score: stats.score, name: name.trim() || "INVITADO" });
-    setSaved(true);
+  const save = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await submitScore({
+        gameId: game.id,
+        playerName: name.trim() || "INVITADO",
+        score: stats.score,
+      });
+      setSaved(true);
+    } catch {
+      setSaveError("NO SE PUDO GUARDAR. REINTENTA");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -102,6 +120,8 @@ export function AsteroidsPlayer({ game }: { game: Game }) {
           score={stats.score}
           name={name}
           saved={saved}
+          saving={saving}
+          error={saveError}
           onNameChange={setNameInput}
           onSave={save}
           onRestart={() => gameRef.current?.restart()}

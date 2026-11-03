@@ -4,6 +4,8 @@ type GameOverModalProps = {
   score: number;
   name: string;
   saved: boolean;
+  saving?: boolean;
+  error?: string | null;
   onNameChange: (name: string) => void;
   onSave: () => void;
   onRestart: () => void;
@@ -13,6 +15,8 @@ export function GameOverModal({
   score,
   name,
   saved,
+  saving = false,
+  error = null,
   onNameChange,
   onSave,
   onRestart,
@@ -31,10 +35,21 @@ export function GameOverModal({
               placeholder="TUS INICIALES"
               aria-label="Tus iniciales"
             />
-            <button type="button" className="btn yellow" onClick={onSave}>GUARDAR PUNTUACIÓN</button>
+            <button type="button" className="btn yellow" onClick={onSave} disabled={saving}>
+              GUARDAR PUNTUACIÓN
+            </button>
           </div>
         ) : (
           <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+        )}
+        {error && !saved && (
+          <div
+            role="alert"
+            className="mono"
+            style={{ color: "var(--magenta)", fontSize: 12, letterSpacing: "0.12em", marginTop: 10 }}
+          >
+            ▸ {error}
+          </div>
         )}
         <div className="actions">
           <button type="button" className="btn" onClick={onRestart}>JUGAR DE NUEVO</button>
