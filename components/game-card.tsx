@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRef } from "react";
 import type { Game } from "@/lib/games";
 
-export function GameCard({ game }: { game: Game }) {
+// best: número = real, null = sin puntuaciones, undefined = cargando.
+export function GameCard({ game, best }: { game: Game; best: number | null | undefined }) {
   const tiltRef = useRef<HTMLAnchorElement>(null);
 
   const onMove = (e: React.MouseEvent) => {
@@ -37,7 +38,7 @@ export function GameCard({ game }: { game: Game }) {
         <div className="row">
           <div className="score-badge">
             <span>MEJOR PUNTUACIÓN</span>
-            <b>{game.best.toLocaleString("es-ES")}</b>
+            <b>{best === undefined ? "…" : best === null ? "—" : best.toLocaleString("es-ES")}</b>
           </div>
           <span className={"btn" + (game.color === "magenta" || game.color === "yellow" ? " " + game.color : "")}>
             JUGAR

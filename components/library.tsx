@@ -4,7 +4,7 @@ import { useState } from "react";
 import { GameCard } from "@/components/game-card";
 import { CATS, GAMES } from "@/lib/games";
 
-export function Library() {
+export function Library({ bests }: { bests: Record<string, number> | null }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<(typeof CATS)[number]>("TODOS");
 
@@ -40,7 +40,7 @@ export function Library() {
 
       <div className="av-grid">
         {filtered.map((g) => (
-          <GameCard key={g.id} game={g} />
+          <GameCard key={g.id} game={g} best={bests ? (bests[g.id] ?? null) : undefined} />
         ))}
         {filtered.length === 0 && (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: 80, color: "var(--ink-faint)" }}>
