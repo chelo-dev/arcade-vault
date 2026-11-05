@@ -49,6 +49,7 @@ Next 16.4.3 + React 19.3. `AGENTS.md` exige leer la guía relevante en `node_mod
 - Flujo para añadir un juego: subagente `game-planner` → `/game-spec` → `/spec-impl`.
   - `game-planner` (`.claude/agents/game-planner.md`): lee catálogo, `REAL_GAMES`, referencias y specs; propone 3 candidatos puntuados (contrato canvas, leaderboard, originalidad…) y recomienda uno. Solo planifica: escribe únicamente en su memoria `.claude/agent-memory/game-planner/MEMORY.md` (memoria de proyecto, se versiona; evita repetir sugerencias) y en el To Do compartido `references/game-suggestions-todo.md`.
   - `/game-spec` (`.claude/skills/game-spec/`) genera la spec del juego elegido y `/spec-impl` la implementa.
+- Modo game jam: subagente `game-jam` (`.claude/agents/game-jam.md`). Dado un tema, inventa un juego original y escribe sin supervisión `specs/game-jam/<game-id>/01-<game-id>-game.md` (juego canvas, registro, ficha nueva) y `02-<game-id>-leaderboard.md` (alta en `games` con `playable = true`). No implementa; luego `/spec-impl` sobre cada fichero.
 
 ### Supabase
 
