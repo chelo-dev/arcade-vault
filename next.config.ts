@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
+  allowedDevOrigins: ["192.168.1.90"],
+  async redirects() {
+    return [{ source: "/", destination: "/games", permanent: false }];
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
