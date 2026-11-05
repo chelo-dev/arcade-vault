@@ -46,7 +46,9 @@ Next 16.4.3 + React 19.3. `AGENTS.md` exige leer la guía relevante en `node_mod
 - Cada juego real es un módulo `lib/games/<slug>.ts` registrado en `lib/games/registry.ts` (`REAL_GAMES[id] = { create, width, height }`): `rocas` (Asteroids), `caida` (Tetris, 460×600), `bloque-buster` (Arkanoid). Assets en `public/games/<slug>/` con rutas absolutas.
 - `/juegos/[id]/jugar` usa `CanvasGamePlayer` (genérico: marco CRT, `PlayerStats`, pausa/fin, `GameOverModal`, guardar puntuación) para los ids de `REAL_GAMES`; el resto usa `GamePlayer` con score simulado. No se crea un player por juego.
 - Originales a portar en `references/resources/started-games/`; plantillas de diseño en `references/resources/templates/`.
-- Para añadir un juego: skill de proyecto `/game-spec` (`.claude/skills/game-spec/`) genera la spec y luego `/spec-impl`.
+- Flujo para añadir un juego: subagente `game-planner` → `/game-spec` → `/spec-impl`.
+  - `game-planner` (`.claude/agents/game-planner.md`): lee catálogo, `REAL_GAMES`, referencias y specs; propone 3 candidatos puntuados (contrato canvas, leaderboard, originalidad…) y recomienda uno. Solo planifica: escribe únicamente en su memoria `.claude/agent-memory/game-planner/MEMORY.md` (memoria de proyecto, se versiona; evita repetir sugerencias) y en el To Do compartido `references/game-suggestions-todo.md`.
+  - `/game-spec` (`.claude/skills/game-spec/`) genera la spec del juego elegido y `/spec-impl` la implementa.
 
 ### Supabase
 
